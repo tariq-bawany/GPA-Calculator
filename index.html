@@ -505,7 +505,7 @@
 
         function createCourseRow(course, type, mode, semesterId = null) {
             const gradeOptions = Object.keys(gradeToGPA).map(g => 
-                `<option value="${g}" ${course.grade === g ? 'selected' : ''}>${g}</option>`
+                `<option value="${g}" class="bg-white/10 text-black" ${course.grade === g ? 'selected' : ''}>${g}</option>`
             ).join('');
 
             const performanceInput = mode === 'grade' 
