@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SZABIST Undergraduate GPA Calculator</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { font-family: 'Inter', sans-serif; }
+        
+        .gradient-bg {
+            background: linear-gradient(135deg, #1e3a5f 0%, #0d1b2a 50%, #1b263b 100%);
+        }
+        
+        .card-gradient {
+            background: linear-gradient(145deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%);
+            backdrop-filter: blur(10px);
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 40px rgba(245, 158, 11, 0.3);
+        }
+        
+        .btn-secondary {
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+            transition: all 0.3s ease;
+        }
+        
+        .btn-secondary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 40px rgba(59, 130, 246, 0.3);
+        }
+        
+        .toggle-switch {
+            position: relative;
+            width: 200px;
+            height: 44px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 22px;
+            cursor: pointer;
+            overflow: hidden;
+        }
+        
+        .toggle-slider {
+            position: absolute;
+            width: 50%;
+            height: 100%;
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            border-radius: 22px;
+            transition: transform 0.3s ease;
+        }
+        
+        .toggle-switch.percentage .toggle-slider {
+            transform: translateX(100%);
+        }
+        
+        .toggle-label {
+            position: relative;
+            z-index: 10;
+            width: 50%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.875rem;
+            font-weight: 600;
+            transition: color 0.3s ease;
+        }
+        
+        .course-row {
+            animation: slideIn 0.3s ease;
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .semester-card {
+            animation: fadeIn 0.4s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        
+        .glow-effect {
+            box-shadow: 0 0 30px rgba(245, 158, 11, 0.2);
+        }
+        
+        input[type="number"]::-webkit-inner-spin-button,
+        input[type="number"]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        
+        input[type="number"] {
+            -moz-appearance: textfield;
+        }
+        
+        .scrollbar-custom::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        .scrollbar-custom::-webkit-scrollbar-track {
+            background: rgba(255,255,255,0.1);
+            border-radius: 3px;
+        }
+        
+        .scrollbar-custom::-webkit-scrollbar-thumb {
+            background: rgba(245, 158, 11, 0.5);
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body class="gradient-bg min-h-screen">
+    <!-- Homepage -->
+    <div id="homepage" class="min-h-screen flex flex-col items-center justify-center p-4">
+        <div class="text-center mb-12">
+            <div class="flex items-center justify-center mb-4">
+                <svg class="w-16 h-16 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5z"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5zm0 0l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14zm-4 6v-7.5l4-2.222"></path>
+                </svg>
+            </div>
+            <h1 class="text-4xl md:text-5xl font-bold text-white mb-3">SZABIST</h1>
+            <p class="text-xl md:text-2xl text-amber-500 font-semibold mb-2">Undergraduate GPA Calculator</p>
+            <p class="text-gray-400 text-sm md:text-base">Calculate your academic performance with precision</p>
+        </div>
+        
+        <div class="flex flex-col md:flex-row gap-6 w-full max-w-2xl px-4">
+            <button onclick="showPage('semester')" class="btn-primary flex-1 py-8 px-8 rounded-2xl text-white font-bold text-xl shadow-xl flex flex-col items-center gap-3">
+                <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+                </svg>
+                Semester GPA
+                <span class="text-sm font-normal opacity-80">Calculate single semester</span>
+            </button>
+            
+            <button onclick="showPage('cgpa')" class="btn-secondary flex-1 py-8 px-8 rounded-2xl text-white font-bold text-xl shadow-xl flex flex-col items-center gap-3">
+                <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                </svg>
+                Cumulative GPA
+                <span class="text-sm font-normal opacity-80">Calculate overall CGPA</span>
+            </button>
+        </div>
+        
+        <div class="mt-12 card-gradient rounded-xl p-6 max-w-md mx-4">
+            <h3 class="text-amber-500 font-semibold mb-3 text-center">Grading Scale</h3>
+            <div class="grid grid-cols-2 gap-x-8 gap-y-1 text-sm text-gray-300">
+                <span>A+ (90-100): 4.00</span>
+                <span>A (85-89): 3.75</span>
+                <span>A− (80-84): 3.50</span>
+                <span>B+ (75-79): 3.25</span>
+                <span>B (70-74): 3.00</span>
+                <span>B− (66-69): 2.75</span>
+                <span>C+ (63-65): 2.50</span>
+                <span>C (60-62): 2.00</span>
+                <span>C− (55-59): 1.50</span>
+                <span>F (0-54): 0.00</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Semester GPA Calculator -->
+    <div id="semester-page" class="min-h-screen p-4 hidden">
+        <div class="max-w-4xl mx-auto">
+            <div class="flex items-center justify-between mb-6">
+                <button onclick="showPage('home')" class="flex items-center gap-2 text-gray-400 hover:text-white transition-colors">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                    </svg>
+                    <span class="hidden md:inline">Back to Home</span>
+                </button>
+                <h1 class="text-2xl md:text-3xl font-bold text-white">Semester GPA</h1>
+                <div class="w-24"></div>
+            </div>
+
+            <!-- Mode Toggle -->
+            <div class="flex justify-center mb-6">
+                <div class="toggle-switch" id="semesterToggle" onclick="toggleMode('semester')">
+                    <div class="toggle-slider"></div>
+                    <div class="flex w-full h-full">
+                        <span class="toggle-label text-white" id="semesterGradeLabel">Grade</span>
+                        <span class="toggle-label text-gray-400" id="semesterPercentLabel">Percentage</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Course List -->
+            <div class="card-gradient rounded-2xl p-4 md:p-6 mb-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-lg font-semibold text-white">Courses</h2>
+                    <button onclick="addCourse('semester')" class="btn-primary px-4 py-2 rounded-lg text-white font-medium text-sm flex items-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                        </svg>
+                        Add Course
+                    </button>
+                </div>
+                
+                <div class="hidden md:grid grid-cols-12 gap-3 mb-3 text-sm text-gray-400 font-medium px-2">
+                    <div class="col-span-5">Course Name</div>
+                    <div class="col-span-2 text-center">Credits</div>
+                    <div class="col-span-4 text-center" id="semesterPerfLabel">Grade</div>
+                    <div class="col-span-1"></div>
+                </div>
+                
+                <div id="semesterCourses" class="space-y-3 max-h-96 overflow-y-auto scrollbar-custom pr-2">
+                    <!-- Course rows will be added here -->
+                </div>
+            </div>
+
+            <!-- Calculate Button -->
+            <button onclick="calculateSemesterGPA()" class="w-full btn-primary py-4 rounded-xl text-white font-bold text-lg mb-6 flex items-center justify-center gap-2">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+                </svg>
+                Calculate GPA
+            </button>
+
+            <!-- Results -->
+            <div id="semesterResult" class="hidden">
+                <div class="card-gradient rounded-2xl p-6 glow-effect">
+                    <h2 class="text-xl font-semibold text-white mb-4 text-center">Your Semester GPA</h2>
+                    <div class="flex flex-col md:flex-row items-center justify-center gap-6">
+                        <div class="text-center">
+                            <div class="text-6xl font-bold text-amber-500" id="semesterGPAValue">0.00</div>
+                            <div class="text-gray-400 mt-1">GPA</div>
+                        </div>
+                        <div class="h-16 w-px bg-gray-600 hidden md:block"></div>
+                        <div class="text-center">
+                            <div class="text-4xl font-bold text-blue-400" id="semesterCreditsValue">0</div>
+                            <div class="text-gray-400 mt-1">Credit Hours</div>
+                        </div>
+                    </div>
+                    <div class="mt-4 text-center">
+                        <span class="inline-block px-4 py-2 rounded-full text-sm font-medium" id="semesterGradeLabel2"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Clear Data Button -->
+            <button onclick="clearData('semester')" class="w-full mt-4 py-3 rounded-xl text-red-400 font-medium border border-red-400/30 hover:bg-red-400/10 transition-colors">
+                Clear All Data
+            </button>
+        </div>
+    </div>
+
+    <!-- CGPA Calculator -->
+    <div id="cgpa-page" class="min-h-screen p-4 hidden">
+        <div class="max-w-4xl mx-auto">
+            <div class="flex items-center justify-between mb-6">
+                <button onclick="showPage('home')" class="flex items-center gap-2 text-gray-400 hover:text-white transition-colors">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                    </svg>
+                    <span class="hidden md:inline">Back to Home</span>
+                </button>
+                <h1 class="text-2xl md:text-3xl font-bold text-white">Cumulative GPA</h1>
+                <div class="w-24"></div>
+            </div>
+
+            <!-- Mode Toggle -->
+            <div class="flex justify-center mb-6">
+                <div class="toggle-switch" id="cgpaToggle" onclick="toggleMode('cgpa')">
+                    <div class="toggle-slider"></div>
+                    <div class="flex w-full h-full">
+                        <span class="toggle-label text-white" id="cgpaGradeLabel">Grade</span>
+                        <span class="toggle-label text-gray-400" id="cgpaPercentLabel">Percentage</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Add Semester Button -->
+            <div class="flex justify-center mb-6">
+                <button id="addSemesterBtn" onclick="addSemester()" class="btn-secondary px-6 py-3 rounded-xl text-white font-medium flex items-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                    </svg>
+                    Add Semester
+                </button>
+            </div>
+
+            <!-- Semesters Container -->
+            <div id="semestersContainer" class="space-y-6 mb-6">
+                <!-- Semester cards will be added here -->
+            </div>
+
+            <!-- Calculate Button -->
+            <button onclick="calculateCGPA()" class="w-full btn-primary py-4 rounded-xl text-white font-bold text-lg mb-6 flex items-center justify-center gap-2">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                </svg>
+                Calculate CGPA
+            </button>
+
+            <!-- Results -->
+            <div id="cgpaResult" class="hidden">
+                <div class="card-gradient rounded-2xl p-6 glow-effect">
+                    <h2 class="text-xl font-semibold text-white mb-4 text-center">Your Cumulative GPA</h2>
+                    <div class="flex flex-col md:flex-row items-center justify-center gap-6">
+                        <div class="text-center">
+                            <div class="text-6xl font-bold text-amber-500" id="cgpaValue">0.00</div>
+                            <div class="text-gray-400 mt-1">CGPA</div>
+                        </div>
+                        <div class="h-16 w-px bg-gray-600 hidden md:block"></div>
+                        <div class="text-center">
+                            <div class="text-4xl font-bold text-blue-400" id="cgpaCreditsValue">0</div>
+                            <div class="text-gray-400 mt-1">Total Credit Hours</div>
+                        </div>
+                        <div class="h-16 w-px bg-gray-600 hidden md:block"></div>
+                        <div class="text-center">
+                            <div class="text-4xl font-bold text-green-400" id="cgpaSemestersValue">0</div>
+                            <div class="text-gray-400 mt-1">Semesters</div>
+                        </div>
+                    </div>
+                    <div class="mt-4 text-center">
+                        <span class="inline-block px-4 py-2 rounded-full text-sm font-medium" id="cgpaGradeLabel2"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Clear Data Button -->
+            <button onclick="clearData('cgpa')" class="w-full mt-4 py-3 rounded-xl text-red-400 font-medium border border-red-400/30 hover:bg-red-400/10 transition-colors">
+                Clear All Data
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Grading Scale
+        const gradingScale = [
+            { grade: 'A+', min: 90, max: 100, gpa: 4.00 },
+            { grade: 'A', min: 85, max: 89, gpa: 3.75 },
+            { grade: 'A−', min: 80, max: 84, gpa: 3.50 },
+            { grade: 'B+', min: 75, max: 79, gpa: 3.25 },
+            { grade: 'B', min: 70, max: 74, gpa: 3.00 },
+            { grade: 'B−', min: 66, max: 69, gpa: 2.75 },
+            { grade: 'C+', min: 63, max: 65, gpa: 2.50 },
+            { grade: 'C', min: 60, max: 62, gpa: 2.00 },
+            { grade: 'C−', min: 55, max: 59, gpa: 1.50 },
+            { grade: 'F', min: 0, max: 54, gpa: 0.00 }
+        ];
+
+        const gradeToGPA = {
+            'A+': 4.00, 'A': 3.75, 'A−': 3.50, 'B+': 3.25, 'B': 3.00,
+            'B−': 2.75, 'C+': 2.50, 'C': 2.00, 'C−': 1.50, 'F': 0.00
+        };
+
+        // State
+        let semesterMode = 'grade';
+        let cgpaMode = 'grade';
+        let semesterCourses = [];
+        let semesters = [];
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            loadFromStorage();
+            if (semesterCourses.length === 0) {
+                addCourse('semester');
+            } else {
+                renderSemesterCourses();
+            }
+            if (semesters.length === 0) {
+                addSemester();
+            } else {
+                renderSemesters();
+            }
+        });
+
+        // Page Navigation
+        function showPage(page) {
+            document.getElementById('homepage').classList.add('hidden');
+            document.getElementById('semester-page').classList.add('hidden');
+            document.getElementById('cgpa-page').classList.add('hidden');
+            
+            if (page === 'home') {
+                document.getElementById('homepage').classList.remove('hidden');
+            } else if (page === 'semester') {
+                document.getElementById('semester-page').classList.remove('hidden');
+            } else if (page === 'cgpa') {
+                document.getElementById('cgpa-page').classList.remove('hidden');
+            }
+        }
+
+        // Toggle Mode
+        function toggleMode(type) {
+            if (type === 'semester') {
+                semesterMode = semesterMode === 'grade' ? 'percentage' : 'grade';
+                updateToggleUI('semester', semesterMode);
+                renderSemesterCourses();
+            } else {
+                cgpaMode = cgpaMode === 'grade' ? 'percentage' : 'grade';
+                updateToggleUI('cgpa', cgpaMode);
+                renderSemesters();
+            }
+            saveToStorage();
+        }
+
+        function updateToggleUI(type, mode) {
+            const toggle = document.getElementById(type + 'Toggle');
+            const gradeLabel = document.getElementById(type + 'GradeLabel');
+            const percentLabel = document.getElementById(type + 'PercentLabel');
+            const perfLabel = document.getElementById(type + 'PerfLabel');
+            
+            if (mode === 'percentage') {
+                toggle.classList.add('percentage');
+                gradeLabel.classList.remove('text-white');
+                gradeLabel.classList.add('text-gray-400');
+                percentLabel.classList.remove('text-gray-400');
+                percentLabel.classList.add('text-white');
+                if (perfLabel) perfLabel.textContent = 'Percentage';
+            } else {
+                toggle.classList.remove('percentage');
+                gradeLabel.classList.add('text-white');
+                gradeLabel.classList.remove('text-gray-400');
+                percentLabel.classList.add('text-gray-400');
+                percentLabel.classList.remove('text-white');
+                if (perfLabel) perfLabel.textContent = 'Grade';
+            }
+        }
+
+        // Semester GPA Functions
+        function addCourse(type, semesterId = null) {
+            const course = {
+                id: Date.now() + Math.random(),
+                name: '',
+                credits: '',
+                grade: 'A+',
+                percentage: ''
+            };
+            
+            if (type === 'semester') {
+                semesterCourses.push(course);
+                renderSemesterCourses();
+            } else {
+                const semester = semesters.find(s => s.id === semesterId);
+                if (semester) {
+                    semester.courses.push(course);
+                    renderSemesters();
+                }
+            }
+            saveToStorage();
+        }
+
+        function removeCourse(type, courseId, semesterId = null) {
+            if (type === 'semester') {
+                semesterCourses = semesterCourses.filter(c => c.id !== courseId);
+                if (semesterCourses.length === 0) addCourse('semester');
+                else renderSemesterCourses();
+            } else {
+                const semester = semesters.find(s => s.id === semesterId);
+                if (semester) {
+                    semester.courses = semester.courses.filter(c => c.id !== courseId);
+                    if (semester.courses.length === 0) addCourse('cgpa', semesterId);
+                    else renderSemesters();
+                }
+            }
+            saveToStorage();
+        }
+
+        function updateCourse(type, courseId, field, value, semesterId = null) {
+            let course;
+            if (type === 'semester') {
+                course = semesterCourses.find(c => c.id === courseId);
+            } else {
+                const semester = semesters.find(s => s.id === semesterId);
+                if (semester) {
+                    course = semester.courses.find(c => c.id === courseId);
+                }
+            }
+            
+            if (course) {
+                if (field === 'credits') {
+                    value = Math.max(0, parseInt(value) || 0);
+                } else if (field === 'percentage') {
+                    value = Math.min(100, Math.max(0, parseFloat(value) || 0));
+                }
+                course[field] = value;
+                saveToStorage();
+            }
+        }
+
+        function renderSemesterCourses() {
+            const container = document.getElementById('semesterCourses');
+            container.innerHTML = semesterCourses.map(course => createCourseRow(course, 'semester', semesterMode)).join('');
+        }
+
+        function createCourseRow(course, type, mode, semesterId = null) {
+            const gradeOptions = Object.keys(gradeToGPA).map(g => 
+                `<option value="${g}" ${course.grade === g ? 'selected' : ''}>${g}</option>`
+            ).join('');
+
+            const performanceInput = mode === 'grade' 
+                ? `<select onchange="updateCourse('${type}', ${course.id}, 'grade', this.value${semesterId ? ', ' + semesterId : ''})" 
+                    class="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-amber-500">
+                    ${gradeOptions}
+                   </select>`
+                : `<input type="number" min="0" max="100" value="${course.percentage}" placeholder="0-100"
+                    onchange="updateCourse('${type}', ${course.id}, 'percentage', this.value${semesterId ? ', ' + semesterId : ''})"
+                    class="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-amber-500 text-center">`;
+
+            return `
+                <div class="course-row grid grid-cols-1 md:grid-cols-12 gap-3 bg-white/5 rounded-xl p-3">
+                    <div class="md:col-span-5">
+                        <label class="text-xs text-gray-400 md:hidden">Course Name</label>
+                        <input type="text" value="${course.name}" placeholder="Enter Course Name"
+                            onchange="updateCourse('${type}', ${course.id}, 'name', this.value${semesterId ? ', ' + semesterId : ''})"
+                            class="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-amber-500">
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="text-xs text-gray-400 md:hidden">Credit Hours</label>
+                        <input type="number" min="0" value="${course.credits}" placeholder="Credits"
+                            onchange="updateCourse('${type}', ${course.id}, 'credits', this.value${semesterId ? ', ' + semesterId : ''})"
+                            class="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-amber-500 text-center">
+                    </div>
+                    <div class="md:col-span-4">
+                        <label class="text-xs text-gray-400 md:hidden">${mode === 'grade' ? 'Grade' : 'Percentage'}</label>
+                        ${performanceInput}
+                    </div>
+                    <div class="md:col-span-1 flex items-end md:items-center justify-end">
+                        <button onclick="removeCourse('${type}', ${course.id}${semesterId ? ', ' + semesterId : ''})" 
+                            class="p-2 text-red-400 hover:bg-red-400/20 rounded-lg transition-colors">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function percentageToGPA(percentage) {
+            for (const scale of gradingScale) {
+                if (percentage >= scale.min && percentage <= scale.max) {
+                    return { grade: scale.grade, gpa: scale.gpa };
+                }
+            }
+            return { grade: 'F', gpa: 0.00 };
+        }
+
+        function calculateSemesterGPA() {
+            let totalPoints = 0;
+            let totalCredits = 0;
+
+            semesterCourses.forEach(course => {
+                const credits = parseInt(course.credits) || 0;
+                if (credits > 0) {
+                    let gpa;
+                    if (semesterMode === 'grade') {
+                        gpa = gradeToGPA[course.grade] || 0;
+                    } else {
+                        const percentage = parseFloat(course.percentage) || 0;
+                        gpa = percentageToGPA(percentage).gpa;
+                    }
+                    totalPoints += credits * gpa;
+                    totalCredits += credits;
+                }
+            });
+
+            const gpa = totalCredits > 0 ? (totalPoints / totalCredits) : 0;
+            displayResult('semester', gpa, totalCredits);
+        }
+
+        function displayResult(type, gpa, credits, semesters = 0) {
+            const resultDiv = document.getElementById(type + 'Result');
+            const gpaValue = document.getElementById(type === 'semester' ? 'semesterGPAValue' : 'cgpaValue');
+            const creditsValue = document.getElementById(type === 'semester' ? 'semesterCreditsValue' : 'cgpaCreditsValue');
+            const gradeLabel = document.getElementById(type === 'semester' ? 'semesterGradeLabel2' : 'cgpaGradeLabel2');
+            
+            gpaValue.textContent = gpa.toFixed(2);
+            creditsValue.textContent = credits;
+            
+            if (type === 'cgpa') {
+                document.getElementById('cgpaSemestersValue').textContent = semesters;
+            }
+
+            // Determine grade classification
+            let classification = '';
+            let colorClass = '';
+            if (gpa >= 3.75) {
+                classification = "Dean's List";
+                colorClass = 'bg-green-500/20 text-green-400';
+            } else if (gpa >= 3.00) {
+                classification = 'Good Standing';
+                colorClass = 'bg-blue-500/20 text-blue-400';
+            } else if (gpa >= 2.00) {
+                classification = 'Satisfactory';
+                colorClass = 'bg-yellow-500/20 text-yellow-400';
+            } else if (gpa >= 1.00) {
+                classification = 'On Probation';
+                colorClass = 'bg-orange-500/20 text-orange-400';
+            } else {
+                classification = 'Academic Warning';
+                colorClass = 'bg-red-500/20 text-red-400';
+            }
+
+            gradeLabel.textContent = classification;
+            gradeLabel.className = `inline-block px-4 py-2 rounded-full text-sm font-medium ${colorClass}`;
+
+            resultDiv.classList.remove('hidden');
+            resultDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+
+        // CGPA Functions
+        function addSemester() {
+            // Maximum 8 semesters allowed
+            if (semesters.length >= 8) return;
+            
+            const semester = {
+                id: Date.now(),
+                name: '',
+                courses: [{
+                    id: Date.now() + 1,
+                    name: '',
+                    credits: '',
+                    grade: 'A+',
+                    percentage: ''
+                }]
+            };
+            semesters.push(semester);
+            renderSemesters();
+            saveToStorage();
+        }
+
+        function removeSemester(semesterId) {
+            // Cannot delete if only 1 semester exists
+            if (semesters.length <= 1) return;
+            
+            semesters = semesters.filter(s => s.id !== semesterId);
+            renderSemesters();
+            saveToStorage();
+        }
+
+        function updateSemesterName(semesterId, name) {
+            const semester = semesters.find(s => s.id === semesterId);
+            if (semester) {
+                semester.name = name;
+                saveToStorage();
+            }
+        }
+
+        function renderSemesters() {
+            const container = document.getElementById('semestersContainer');
+            container.innerHTML = semesters.map(semester => createSemesterCard(semester)).join('');
+            
+            // Update Add Semester button state (max 8 semesters)
+            const addBtn = document.getElementById('addSemesterBtn');
+            if (addBtn) {
+                if (semesters.length >= 8) {
+                    addBtn.disabled = true;
+                    addBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                } else {
+                    addBtn.disabled = false;
+                    addBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                }
+            }
+        }
+
+        function createSemesterCard(semester) {
+            const coursesHTML = semester.courses.map(course => 
+                createCourseRow(course, 'cgpa', cgpaMode, semester.id)
+            ).join('');
+            
+            // Only show delete button if there's more than 1 semester
+            const deleteButtonHTML = semesters.length > 1 ? `
+                <button onclick="removeSemester(${semester.id})" 
+                    class="p-2 text-red-400 hover:bg-red-400/20 rounded-lg transition-colors" title="Remove Semester">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                    </svg>
+                </button>
+            ` : '';
+
+            return `
+                <div class="semester-card card-gradient rounded-2xl p-4 md:p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <input type="text" value="${semester.name}" placeholder="Enter Semester No."
+                            onchange="updateSemesterName(${semester.id}, this.value)"
+                            class="bg-transparent text-xl font-semibold text-white placeholder-gray-500 focus:outline-none border-b border-transparent focus:border-amber-500">
+                        <div class="flex items-center gap-2">
+                            <button onclick="addCourse('cgpa', ${semester.id})" 
+                                class="p-2 text-amber-500 hover:bg-amber-500/20 rounded-lg transition-colors" title="Add Course">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                                </svg>
+                            </button>
+                            ${deleteButtonHTML}
+                        </div>
+                    </div>
+                    
+                    <div class="hidden md:grid grid-cols-12 gap-3 mb-3 text-sm text-gray-400 font-medium px-2">
+                        <div class="col-span-5">Course Name</div>
+                        <div class="col-span-2 text-center">Credits</div>
+                        <div class="col-span-4 text-center">${cgpaMode === 'grade' ? 'Grade' : 'Percentage'}</div>
+                        <div class="col-span-1"></div>
+                    </div>
+                    
+                    <div class="space-y-3 max-h-64 overflow-y-auto scrollbar-custom pr-2">
+                        ${coursesHTML}
+                    </div>
+                </div>
+            `;
+        }
+
+        function calculateCGPA() {
+            let totalPoints = 0;
+            let totalCredits = 0;
+            let semesterCount = 0;
+
+            semesters.forEach(semester => {
+                let semesterHasCourse = false;
+                semester.courses.forEach(course => {
+                    const credits = parseInt(course.credits) || 0;
+                    if (credits > 0) {
+                        semesterHasCourse = true;
+                        let gpa;
+                        if (cgpaMode === 'grade') {
+                            gpa = gradeToGPA[course.grade] || 0;
+                        } else {
+                            const percentage = parseFloat(course.percentage) || 0;
+                            gpa = percentageToGPA(percentage).gpa;
+                        }
+                        totalPoints += credits * gpa;
+                        totalCredits += credits;
+                    }
+                });
+                if (semesterHasCourse) semesterCount++;
+            });
+
+            const cgpa = totalCredits > 0 ? (totalPoints / totalCredits) : 0;
+            displayResult('cgpa', cgpa, totalCredits, semesterCount);
+        }
+
+        // Storage Functions
+        function saveToStorage() {
+            const data = {
+                semesterMode,
+                cgpaMode,
+                semesterCourses,
+                semesters
+            };
+            localStorage.setItem('szabistGPA', JSON.stringify(data));
+        }
+
+        function loadFromStorage() {
+            const data = localStorage.getItem('szabistGPA');
+            if (data) {
+                const parsed = JSON.parse(data);
+                semesterMode = parsed.semesterMode || 'grade';
+                cgpaMode = parsed.cgpaMode || 'grade';
+                semesterCourses = parsed.semesterCourses || [];
+                semesters = parsed.semesters || [];
+                
+                updateToggleUI('semester', semesterMode);
+                updateToggleUI('cgpa', cgpaMode);
+            }
+        }
+
+        function clearData(type) {
+            if (confirm('Are you sure you want to clear all data? This cannot be undone.')) {
+                if (type === 'semester') {
+                    semesterCourses = [];
+                    addCourse('semester');
+                    document.getElementById('semesterResult').classList.add('hidden');
+                } else {
+                    semesters = [];
+                    addSemester();
+                    document.getElementById('cgpaResult').classList.add('hidden');
+                }
+                saveToStorage();
+            }
+        }
+    </script>
+</body>
+</html>
