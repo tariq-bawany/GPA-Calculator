@@ -170,41 +170,41 @@ function createCourseRow(course, type, mode, semesterId = null) {
   const gradeOptions = Object.keys(gradeToGPA)
     .map(
       (g) =>
-        `<option value="${g}" class="bg-white/10 text-black" ${course.grade === g ? "selected" : ""}>${g}</option>`,
+        `<option value="${g}" ${course.grade === g ? "selected" : ""}>${g}</option>`,
     )
     .join("");
 
   const performanceInput =
     mode === "grade"
       ? `<select onchange="updateCourse('${type}', ${course.id}, 'grade', this.value${semesterId ? ", " + semesterId : ""})" 
-                    class="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-amber-500">
+                    class="input-ledger w-full focus:outline-none">
                     ${gradeOptions}
                    </select>`
       : `<input type="number" min="0" max="100" value="${course.percentage}" placeholder="0-100"
                     onchange="updateCourse('${type}', ${course.id}, 'percentage', this.value${semesterId ? ", " + semesterId : ""})"
-                    class="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-amber-500 text-center">`;
+                    class="input-ledger w-full focus:outline-none text-center">`;
 
   return `
-                <div class="course-row grid grid-cols-1 md:grid-cols-12 gap-3 bg-white/5 rounded-xl p-3">
-                    <div class="md:col-span-5">
-                        <label class="text-xs text-gray-400 md:hidden">Course Name</label>
+                <div class="course-row course-slip mb-3">
+                    <div class="flex flex-col">
+                        <label class="input-label md:hidden">Course Name</label>
                         <input type="text" value="${course.name}" placeholder="Enter Course Name"
                             onchange="updateCourse('${type}', ${course.id}, 'name', this.value${semesterId ? ", " + semesterId : ""})"
-                            class="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-amber-500">
+                            class="input-ledger w-full focus:outline-none">
                     </div>
-                    <div class="md:col-span-2">
-                        <label class="text-xs text-gray-400 md:hidden">Credit Hours</label>
+                    <div class="flex flex-col">
+                        <label class="input-label md:hidden">Credit Hours</label>
                         <input type="number" min="0" value="${course.credits}" placeholder="Credits"
                             onchange="updateCourse('${type}', ${course.id}, 'credits', this.value${semesterId ? ", " + semesterId : ""})"
-                            class="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-amber-500 text-center">
+                            class="input-ledger w-full focus:outline-none text-center">
                     </div>
-                    <div class="md:col-span-4">
-                        <label class="text-xs text-gray-400 md:hidden">${mode === "grade" ? "Grade" : "Percentage"}</label>
+                    <div class="flex flex-col">
+                        <label class="input-label md:hidden">${mode === "grade" ? "Grade" : "Percentage"}</label>
                         ${performanceInput}
                     </div>
-                    <div class="md:col-span-1 flex items-end md:items-center justify-end">
+                    <div class="flex items-end md:items-center justify-end">
                         <button onclick="removeCourse('${type}', ${course.id}${semesterId ? ", " + semesterId : ""})" 
-                            class="p-2 text-red-400 hover:bg-red-400/20 rounded-lg transition-colors">
+                            class="btn-delete" title="Delete Course">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
                             </svg>
@@ -270,23 +270,23 @@ function displayResult(type, gpa, credits, semesters = 0) {
   let colorClass = "";
   if (gpa >= 3.75) {
     classification = "Dean's List";
-    colorClass = "bg-green-500/20 text-green-400";
+    colorClass = "badge-dean";
   } else if (gpa >= 3.0) {
     classification = "Good Standing";
-    colorClass = "bg-blue-500/20 text-blue-400";
+    colorClass = "badge-good";
   } else if (gpa >= 2.0) {
     classification = "Satisfactory";
-    colorClass = "bg-yellow-500/20 text-yellow-400";
+    colorClass = "badge-satisfactory";
   } else if (gpa >= 1.0) {
     classification = "On Probation";
-    colorClass = "bg-orange-500/20 text-orange-400";
+    colorClass = "badge-probation";
   } else {
     classification = "Academic Warning";
-    colorClass = "bg-red-500/20 text-red-400";
+    colorClass = "badge-warning";
   }
 
   gradeLabel.textContent = classification;
-  gradeLabel.className = `inline-block px-4 py-2 rounded-full text-sm font-medium ${colorClass}`;
+  gradeLabel.className = `inline-block px-4 py-2 rounded-full text-sm font-semibold ${colorClass}`;
 
   resultDiv.classList.remove("hidden");
   resultDiv.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -361,7 +361,7 @@ function createSemesterCard(semester) {
     semesters.length > 1
       ? `
                 <button onclick="removeSemester(${semester.id})" 
-                    class="p-2 text-red-400 hover:bg-red-400/20 rounded-lg transition-colors" title="Remove Semester">
+                    class="btn-icon btn-icon-leather" title="Remove Semester">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
                     </svg>
@@ -370,14 +370,14 @@ function createSemesterCard(semester) {
       : "";
 
   return `
-                <div class="semester-card card-gradient rounded-2xl p-4 md:p-6">
-                    <div class="flex items-center justify-between mb-4">
+                <div class="semester-card card-parchment rounded-xl p-4 md:p-6 mb-6">
+                    <div class="flex items-center justify-between mb-4 border-b border-faded-gold pb-3">
                         <input type="text" value="${semester.name}" placeholder="Enter Semester No."
                             onchange="updateSemesterName(${semester.id}, this.value)"
-                            class="bg-transparent text-xl font-semibold text-white placeholder-gray-500 focus:outline-none border-b border-transparent focus:border-amber-500">
+                            class="semester-title-input">
                         <div class="flex items-center gap-2">
                             <button onclick="addCourse('cgpa', ${semester.id})" 
-                                class="p-2 text-amber-500 hover:bg-amber-500/20 rounded-lg transition-colors" title="Add Course">
+                                class="btn-icon btn-icon-brass" title="Add Course">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
                                 </svg>
@@ -386,14 +386,14 @@ function createSemesterCard(semester) {
                         </div>
                     </div>
                     
-                    <div class="hidden md:grid grid-cols-12 gap-3 mb-3 text-sm text-gray-400 font-medium px-2">
-                        <div class="col-span-5">Course Name</div>
-                        <div class="col-span-2 text-center">Credits</div>
-                        <div class="col-span-4 text-center">${cgpaMode === "grade" ? "Grade" : "Percentage"}</div>
-                        <div class="col-span-1"></div>
+                    <div class="course-slip-header">
+                        <div>Course Name</div>
+                        <div class="text-center">Credits</div>
+                        <div class="text-center">${cgpaMode === "grade" ? "Grade" : "Percentage"}</div>
+                        <div></div>
                     </div>
                     
-                    <div class="space-y-3 max-h-64 overflow-y-auto scrollbar-custom pr-2">
+                    <div class="space-y-3 max-h-64 overflow-y-auto scrollbar-scholarly pr-2">
                         ${coursesHTML}
                     </div>
                 </div>
