@@ -1,49 +1,63 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SZABIST Undergraduate GPA Calculator</title>
     <!-- Umami Analytics -->
-<script async defer data-website-id="5933b37b-6cf8-4ffe-abea-e45efcebc63a" src="https://umami-picmsh37r-muhammadtariq19032005-gmailcoms-projects.vercel.app/script.js"></script>
+    <script async defer data-website-id="5933b37b-6cf8-4ffe-abea-e45efcebc63a"
+        src="https://umami-seven-liard-98.vercel.app/script.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,800;1,700&family=Source+Sans+3:ital,wght@0,400;0,600;1,400;1,600&family=JetBrains+Mono:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,800;1,700&family=Source+Sans+3:ital,wght@0,400;0,600;1,400;1,600&family=JetBrains+Mono:ital,wght@0,400;0,500;1,400&display=swap"
+        rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
+
 <body class="atelier-bg min-h-screen text-ivory">
     <!-- Homepage -->
     <div id="homepage" class="min-h-screen flex flex-col items-center justify-center p-4 relative z-10">
         <div class="text-center mb-12">
             <div class="flex items-center justify-center mb-4">
                 <svg class="w-16 h-16 text-brass" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5z"></path>
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z"></path>
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5zm0 0l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14zm-4 6v-7.5l4-2.222"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5z">
+                    </path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z">
+                    </path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M12 14l9-5-9-5-9 5 9 5zm0 0l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14zm-4 6v-7.5l4-2.222">
+                    </path>
                 </svg>
             </div>
             <h1 class="text-4xl md:text-5xl font-bold text-ivory mb-3 font-display">SZABIST</h1>
             <p class="text-xl md:text-2xl text-brass font-semibold mb-2 font-display">Undergraduate GPA Calculator</p>
             <p class="text-warm-gray text-sm md:text-base">Calculate your academic performance with precision</p>
         </div>
-        
+
         <div class="flex flex-col md:flex-row gap-6 w-full max-w-2xl px-4 justify-center">
             <button onclick="showPage('semester')" class="btn-brass flex-1 py-8 px-8 flex flex-col items-center gap-3">
                 <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z">
+                    </path>
                 </svg>
                 <span class="font-display font-bold text-xl">Semester GPA</span>
                 <span class="text-xs font-normal opacity-85">Calculate single semester</span>
             </button>
-            
+
             <button onclick="showPage('cgpa')" class="btn-brass flex-1 py-8 px-8 flex flex-col items-center gap-3">
                 <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z">
+                    </path>
                 </svg>
                 <span class="font-display font-bold text-xl">Cumulative GPA</span>
                 <span class="text-xs font-normal opacity-85">Calculate overall CGPA</span>
             </button>
         </div>
-        
+
         <div class="mt-12 grade-register max-w-md mx-4 w-full">
             <div class="grade-register-header">
                 Grading Scale
@@ -69,7 +83,8 @@
             <div class="page-header rounded-xl mb-6 mt-4">
                 <a onclick="showPage('home')" class="back-link">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
                     </svg>
                     <span>Back</span>
                 </a>
@@ -94,27 +109,31 @@
                     <h2 class="text-xl font-bold font-display text-ink">Courses</h2>
                     <button onclick="addCourse('semester')" class="btn-brass px-4 py-2 text-sm flex items-center gap-2">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
                         </svg>
                         Add Course
                     </button>
                 </div>
-                
+
                 <div class="course-slip-header">
                     <div>Course Name</div>
                     <div class="text-center">Credits</div>
                     <div class="text-center" id="semesterPerfLabel">Grade</div>
                     <div></div>
                 </div>
-                
+
                 <div id="semesterCourses" class="space-y-3 max-h-96 overflow-y-auto scrollbar-scholarly pr-2">
                     <!-- Course rows will be added here -->
                 </div>
             </div>
 
-            <button onclick="calculateSemesterGPA()" class="w-full btn-brass py-4 text-lg mb-6 flex items-center justify-center gap-2">
+            <button onclick="calculateSemesterGPA()"
+                class="w-full btn-brass py-4 text-lg mb-6 flex items-center justify-center gap-2">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z">
+                    </path>
                 </svg>
                 Calculate GPA
             </button>
@@ -135,7 +154,8 @@
                         </div>
                     </div>
                     <div class="mt-6 text-center">
-                        <span class="inline-block px-4 py-2 rounded-full text-sm font-semibold" id="semesterGradeLabel2"></span>
+                        <span class="inline-block px-4 py-2 rounded-full text-sm font-semibold"
+                            id="semesterGradeLabel2"></span>
                     </div>
                 </div>
             </div>
@@ -153,7 +173,8 @@
             <div class="page-header rounded-xl mb-6 mt-4">
                 <a onclick="showPage('home')" class="back-link">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
                     </svg>
                     <span>Back</span>
                 </a>
@@ -174,9 +195,11 @@
 
             <!-- Add Semester Button -->
             <div class="flex justify-center mb-6">
-                <button id="addSemesterBtn" onclick="addSemester()" class="btn-leather px-6 py-3 flex items-center gap-2">
+                <button id="addSemesterBtn" onclick="addSemester()"
+                    class="btn-leather px-6 py-3 flex items-center gap-2">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
                     </svg>
                     Add Semester
                 </button>
@@ -188,9 +211,12 @@
             </div>
 
             <!-- Calculate Button -->
-            <button onclick="calculateCGPA()" class="w-full btn-brass py-4 text-lg mb-6 flex items-center justify-center gap-2">
+            <button onclick="calculateCGPA()"
+                class="w-full btn-brass py-4 text-lg mb-6 flex items-center justify-center gap-2">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z">
+                    </path>
                 </svg>
                 Calculate CGPA
             </button>
@@ -216,7 +242,8 @@
                         </div>
                     </div>
                     <div class="mt-6 text-center">
-                        <span class="inline-block px-4 py-2 rounded-full text-sm font-semibold" id="cgpaGradeLabel2"></span>
+                        <span class="inline-block px-4 py-2 rounded-full text-sm font-semibold"
+                            id="cgpaGradeLabel2"></span>
                     </div>
                 </div>
             </div>
@@ -229,4 +256,5 @@
     </div>
     <script src="script.js"></script>
 </body>
+
 </html>
