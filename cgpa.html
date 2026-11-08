@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="SZABIST CGPA Calculator — calculate your cumulative GPA across up to 8 semesters.">
+    <meta name="theme-color" content="#1a1410">
+    <title>CGPA — SZABIST GPA Calculator</title>
+    <!-- Umami Analytics -->
+    <script async defer data-website-id="5933b37b-6cf8-4ffe-abea-e45efcebc63a"
+        src="https://umami-seven-liard-98.vercel.app/script.js"></script>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="apple-touch-icon" href="favicon.svg">
+</head>
+<body class="light-theme">
+    <!-- Skip to content -->
+    <a href="#main" class="skip-link">Skip to main content</a>
+
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="header-inner">
+                <a href="index.html" class="logo">
+                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14zm-4 6v-7.5l4-2.222"></path>
+                    </svg>
+                    <span class="font-display font-bold text-xl tracking-tight">SZABIST GPA</span>
+                </a>
+                <button type="button" class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Toggle navigation menu" aria-expanded="false">
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path>
+                    </svg>
+                </button>
+                <button type="button" class="btn-icon theme-toggle-btn" id="themeToggleBtn" aria-label="Switch theme" title="Switch theme">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
+                    </svg>
+                </button>
+                <nav class="nav">
+                    <a href="index.html" class="nav-link">Home</a>
+                    <a href="semester-gpa.html" class="nav-link">Semester GPA</a>
+                    <a href="settings.html" class="nav-link nav-link--settings">Settings</a>
+                </nav>
+                <nav class="nav--mobile" id="mobileNav">
+                    <a href="index.html" class="nav-link">Home</a>
+                    <a href="semester-gpa.html" class="nav-link">Semester GPA</a>
+                    <a href="settings.html" class="nav-link nav-link--settings">Settings</a>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <main id="main" class="container">
+        <!-- Page header -->
+        <div class="page-header">
+            <a href="index.html" class="btn btn-ghost btn-sm back-link">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                </svg>
+                Back to home
+            </a>
+            <div class="page-title-wrap">
+                <h1 class="page-title">Cumulative GPA (CGPA)</h1>
+                <p class="page-desc">Add up to 8 semesters and calculate your overall CGPA.</p>
+            </div>
+        </div>
+
+        <!-- Ad slot: leaderboard (reserved) -->
+        <div class="ad-slot ad-slot--leaderboard empty" id="ad-leaderboard-cgpa" aria-label="Advertisement">
+            <div class="ad-slot-placeholder">Advertisement</div>
+        </div>
+
+        <!-- Mode toggle -->
+        <div class="card mb-lg">
+            <div class="card-body">
+                <div class="toggle-group">
+                    <label class="toggle-label-standalone">Enter grades as</label>
+                    <div class="toggle" id="cgpaToggle" role="switch" aria-checked="false" aria-label="Grade or Percentage input mode">
+                        <input type="checkbox" id="cgpaModeInput">
+                        <div class="toggle-slider"></div>
+                        <span class="toggle-label active" id="cgpaGradeLabel">Grade</span>
+                        <span class="toggle-label inactive" id="cgpaPercentLabel">Percentage</span>
+                    </div>
+                </div>
+                <p class="toggle-hint">Switch between letter grades (A+, A, …) or percentage (0–100).</p>
+            </div>
+        </div>
+
+        <!-- Add semester -->
+        <div class="mb-md">
+            <button type="button" class="btn btn-primary btn-full" id="addSemesterBtn" aria-label="Add a new semester card">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                </svg>
+                Add Semester
+            </button>
+            <p class="add-semester-hint mt-sm">Maximum 8 semesters.</p>
+        </div>
+
+        <!-- Semesters container -->
+        <div id="semestersContainer" class="semester-list space-y-lg" aria-live="polite">
+            <!-- Semester cards injected by JS -->
+        </div>
+
+        <!-- Sticky calculate bar (mobile) -->
+        <div class="calc-sticky">
+            <button type="button" class="btn btn-primary btn-full" id="calcCGPABtn" aria-label="Calculate Cumulative GPA">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                </svg>
+                Calculate CGPA
+            </button>
+        </div>
+
+        <!-- Result -->
+        <div id="cgpaResult" class="result-wrap hidden" aria-live="polite">
+            <div class="result-plaque">
+                <h2 class="result-title">Your Cumulative GPA</h2>
+                <div class="result-values">
+                    <div class="result-value">
+                        <div class="gpa-number" id="cgpaValue">0.00</div>
+                        <div class="gpa-label">CGPA</div>
+                    </div>
+                    <div class="result-divider hidden-md"></div>
+                    <div class="result-value">
+                        <div class="gpa-meta-item">
+                            <span id="cgpaCreditsValue">0</span>
+                            <span class="label">Total Credits</span>
+                        </div>
+                    </div>
+                    <div class="result-divider hidden-md"></div>
+                    <div class="result-value">
+                        <div class="gpa-meta-item">
+                            <span id="cgpaSemestersValue">0</span>
+                            <span class="label">Semesters</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-lg">
+                    <span class="badge badge-good" id="cgpaGradeBadge">—</span>
+                </div>
+                <div class="result-actions mt-lg">
+                    <button type="button" class="btn btn-ghost btn-sm" id="shareCGPABtn" aria-label="Share CGPA result">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"></path>
+                        </svg>
+                        Share result
+                    </button>
+                    <button type="button" class="btn btn-danger btn-sm" id="clearCGPABtn" aria-label="Clear all semester data">
+                        Clear all
+                    </button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Sticky bottom banner ad (reserved) -->
+    <div class="ad-banner-sticky empty" id="ad-banner-cgpa">
+        <button type="button" class="close-banner" id="closeBannerCGPA" aria-label="Close advertisement">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+        </button>
+        <div class="ad-slot-placeholder">Advertisement</div>
+    </div>
+
+    <script src="script.js"></script>
+    <script>
+        // Page-specific initialization for CGPA
+        document.addEventListener('DOMContentLoaded', () => {
+            window.szabist.initPage('cgpa');
+        });
+    </script>
+</body>
+</html>
