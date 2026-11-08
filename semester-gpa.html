@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="SZABIST Semester GPA Calculator — calculate your semester GPA in real time.">
+    <meta name="theme-color" content="#1a1410">
+    <title>Semester GPA — SZABIST GPA Calculator</title>
+    <!-- Umami Analytics -->
+    <script async defer data-website-id="5933b37b-6cf8-4ffe-abea-e45efcebc63a"
+        src="https://umami-seven-liard-98.vercel.app/script.js"></script>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="apple-touch-icon" href="favicon.svg">
+</head>
+<body class="light-theme">
+    <!-- Skip to content -->
+    <a href="#main" class="skip-link">Skip to main content</a>
+
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="header-inner">
+                <a href="index.html" class="logo">
+                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14zm-4 6v-7.5l4-2.222"></path>
+                    </svg>
+                    <span class="font-display font-bold text-xl tracking-tight">SZABIST GPA</span>
+                </a>
+                <button type="button" class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Toggle navigation menu" aria-expanded="false">
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path>
+                    </svg>
+                </button>
+                <button type="button" class="btn-icon theme-toggle-btn" id="themeToggleBtn" aria-label="Switch theme" title="Switch theme">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
+                    </svg>
+                </button>
+                <nav class="nav">
+                    <a href="index.html" class="nav-link">Home</a>
+                    <a href="cgpa.html" class="nav-link">CGPA</a>
+                    <a href="settings.html" class="nav-link nav-link--settings">Settings</a>
+                </nav>
+                <nav class="nav--mobile" id="mobileNav">
+                    <a href="index.html" class="nav-link">Home</a>
+                    <a href="cgpa.html" class="nav-link">CGPA</a>
+                    <a href="settings.html" class="nav-link nav-link--settings">Settings</a>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <main id="main" class="container">
+        <!-- Page header -->
+        <div class="page-header">
+            <a href="index.html" class="btn btn-ghost btn-sm back-link">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                </svg>
+                Back to home
+            </a>
+            <div class="page-title-wrap">
+                <h1 class="page-title">Semester GPA</h1>
+                <p class="page-desc">Enter your courses and see your GPA update in real time.</p>
+            </div>
+        </div>
+
+        <!-- Ad slot: leaderboard (reserved) -->
+        <div class="ad-slot ad-slot--leaderboard empty" id="ad-leaderboard-semester" aria-label="Advertisement">
+            <div class="ad-slot-placeholder">Advertisement</div>
+        </div>
+
+        <!-- Mode toggle -->
+        <div class="card mb-lg">
+            <div class="card-body">
+                <div class="toggle-group">
+                    <label class="toggle-label-standalone">Enter grades as</label>
+                    <div class="toggle" id="semesterToggle" role="switch" aria-checked="false" aria-label="Grade or Percentage input mode">
+                        <input type="checkbox" id="semesterModeInput">
+                        <div class="toggle-slider"></div>
+                        <span class="toggle-label active" id="semesterGradeLabel">Grade</span>
+                        <span class="toggle-label inactive" id="semesterPercentLabel">Percentage</span>
+                    </div>
+                </div>
+                <p class="toggle-hint">Switch between letter grades (A+, A, …) or percentage (0–100).</p>
+            </div>
+        </div>
+
+        <!-- Course list -->
+        <div class="card card-lg mb-lg">
+            <div class="card-body">
+                <div class="card-header-row">
+                    <h2 class="card-title">Courses</h2>
+                    <button type="button" class="btn btn-primary btn-sm" id="addCourseBtn" aria-label="Add a new course row">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                        </svg>
+                        Add Course
+                    </button>
+                </div>
+
+                <div class="course-header">
+                    <div>Course Name</div>
+                    <div class="text-center">Credits</div>
+                    <div class="text-center" id="semesterPerfLabel">Grade</div>
+                    <div></div>
+                </div>
+
+                <div id="semesterCourses" class="course-list space-y-sm" aria-live="polite">
+                    <!-- Course rows injected by JS -->
+                </div>
+
+                <p class="empty-state hidden" id="semesterEmptyState">
+                    No courses added yet. Tap “Add Course” to begin.
+                </p>
+            </div>
+        </div>
+
+        <!-- Sticky calculate bar (mobile) -->
+        <div class="calc-sticky">
+            <button type="button" class="btn btn-primary btn-full" id="calcSemesterBtn" aria-label="Calculate Semester GPA">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+                </svg>
+                Calculate GPA
+            </button>
+        </div>
+
+        <!-- Result -->
+        <div id="semesterResult" class="result-wrap hidden" aria-live="polite">
+            <div class="result-plaque">
+                <h2 class="result-title">Your Semester GPA</h2>
+                <div class="result-values">
+                    <div class="result-value">
+                        <div class="gpa-number" id="semesterGPAValue">0.00</div>
+                        <div class="gpa-label">GPA</div>
+                    </div>
+                    <div class="result-divider hidden-md"></div>
+                    <div class="result-value">
+                        <div class="gpa-meta-item">
+                            <span id="semesterCreditsValue">0</span>
+                            <span class="label">Credit Hours</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-lg">
+                    <span class="badge badge-good" id="semesterGradeBadge">—</span>
+                </div>
+                <div class="result-actions mt-lg">
+                    <button type="button" class="btn btn-ghost btn-sm" id="shareSemesterBtn" aria-label="Share semester result">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"></path>
+                        </svg>
+                        Share result
+                    </button>
+                    <button type="button" class="btn btn-danger btn-sm" id="clearSemesterBtn" aria-label="Clear all course data">
+                        Clear all
+                    </button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Sticky bottom banner ad (reserved) -->
+    <div class="ad-banner-sticky empty" id="ad-banner-semester">
+        <button type="button" class="close-banner" id="closeBannerSemester" aria-label="Close advertisement">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+        </button>
+        <div class="ad-slot-placeholder">Advertisement</div>
+    </div>
+
+    <script src="script.js"></script>
+    <script>
+        // Page-specific initialization for Semester GPA
+        document.addEventListener('DOMContentLoaded', () => {
+            window.szabist.initPage('semester');
+        });
+    </script>
+</body>
+</html>

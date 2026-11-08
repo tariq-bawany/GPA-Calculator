@@ -1,0 +1,21 @@
+{
+  "name": "SZABIST GPA Calculator",
+  "short_name": "SZABIST GPA",
+  "description": "Calculate your semester GPA and CGPA using the official SZABIST grading scale. Built for SZABIST Karachi students.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#faf8f3",
+  "theme_color": "#1a1410",
+  "orientation": "portrait",
+  "scope": "/",
+  "icons": [
+    {
+      "src": "favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["education", "utilities"],
+  "lang": "en"
+}
