@@ -441,7 +441,8 @@
       trackEvent('mode_toggled', { tool: 'semester_gpa', mode: state.semesterMode });
     });
 
-    // Add course
+    // Add course — insert at top so the new row appears immediately
+    // under the Add Course button (no scrolling down required)
     addBtn.addEventListener('click', () => {
       const course = {
         id: Date.now() + Math.random(),
@@ -450,9 +451,12 @@
         grade: 'A+',
         percentage: '',
       };
-      state.semesterCourses.push(course);
+      state.semesterCourses.unshift(course);
       saveToStorage();
       render();
+      // Scroll to the newly added course row (now the first row)
+      const firstRow = container.querySelector('.course-row');
+      if (firstRow) firstRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
       showToast('Course added');
       trackEvent('course_added', { tool: 'semester_gpa' });
     });
@@ -800,7 +804,7 @@
       trackEvent('mode_toggled', { tool: 'cgpa', mode: state.cgpaMode });
     });
 
-    // Add semester
+    // Add semester — push to end (chronological order), then scroll to new card
     addBtn.addEventListener('click', () => {
       if (state.semesters.length >= 8) return;
       const semester = {
@@ -811,6 +815,9 @@
       state.semesters.push(semester);
       saveToStorage();
       render();
+      // Scroll to the newly added semester card (last child)
+      const lastCard = container.querySelector('.semester-card:last-child');
+      if (lastCard) lastCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
       showToast('Semester added');
       trackEvent('semester_added', { tool: 'cgpa' });
     });
@@ -839,6 +846,12 @@
       });
       saveToStorage();
       render();
+      // Scroll to the newly added course row within the target semester card
+      const card = document.querySelector(`.semester-card[data-id="${semesterId}"]`);
+      if (card) {
+        const lastRow = card.querySelector('.course-row:last-child');
+        if (lastRow) lastRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
     };
 
     window.szabist.removeCgpaCourse = (semesterId, courseId) => {
