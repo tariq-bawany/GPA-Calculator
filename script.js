@@ -1027,6 +1027,22 @@
     }
   }
 
+  const THEME_ICONS = {
+    light: `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
+    </svg>`,
+    dark: `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>
+    </svg>`,
+  };
+
+  function setThemeIcon(btn, theme) {
+    if (!btn) return;
+    const icon = theme === 'dark' ? THEME_ICONS.dark : THEME_ICONS.light;
+    btn.innerHTML = icon;
+    btn.setAttribute('aria-label', theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme');
+  }
+
   function applyTheme(theme) {
     const body = document.body;
     const btn = document.getElementById('themeToggleBtn');
@@ -1041,10 +1057,7 @@
       saveTheme('light');
     }
 
-    // Update button aria-label based on current theme
-    if (btn) {
-      btn.setAttribute('aria-label', theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme');
-    }
+    setThemeIcon(btn, theme);
   }
 
   function initTheme() {
@@ -1064,7 +1077,7 @@
     }
 
     if (btn) {
-      btn.setAttribute('aria-label', currentTheme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme');
+      setThemeIcon(btn, currentTheme);
       btn.addEventListener('click', () => {
         const isDark = body.classList.contains('dark-theme');
         applyTheme(isDark ? 'light' : 'dark');
