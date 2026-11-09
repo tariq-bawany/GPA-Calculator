@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="SZABIST CGPA Calculator — calculate your cumulative GPA across up to 8 semesters.">
-    <meta name="theme-color" content="#1a1410">
+    <meta name="theme-color" content="#faf8f3">
     <title>CGPA — SZABIST GPA Calculator</title>
     <!-- Umami Analytics -->
     <script async defer data-website-id="5933b37b-6cf8-4ffe-abea-e45efcebc63a"
@@ -12,7 +12,6 @@
     <link rel="stylesheet" href="style.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <script src="https://cdn.tailwindcss.com"></script>
     <link rel="manifest" href="manifest.json">
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
     <link rel="apple-touch-icon" href="favicon.svg">
@@ -39,17 +38,17 @@
                         </svg>
                     </button>
                 </div>
-                <button type="button" class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Toggle navigation menu" aria-expanded="false">
+                <button type="button" class="btn-icon mobile-menu-btn" id="mobileMenuBtn" aria-label="Toggle navigation menu" aria-expanded="false">
                     <svg viewBox="0 0 24 24" aria-hidden="true">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path>
                     </svg>
                 </button>
-                <nav class="nav">
+                <nav class="nav" id="mainNav">
                     <a href="index.html" class="nav-link">Home</a>
                     <a href="semester-gpa.html" class="nav-link">Semester GPA</a>
                     <a href="settings.html" class="nav-link nav-link--settings">Settings</a>
                 </nav>
-                <nav class="nav--mobile" id="mobileNav">
+                <nav class="nav-mobile" id="mobileNav">
                     <a href="index.html" class="nav-link">Home</a>
                     <a href="semester-gpa.html" class="nav-link">Semester GPA</a>
                     <a href="settings.html" class="nav-link nav-link--settings">Settings</a>
@@ -174,7 +173,6 @@
 
     <script src="script.js"></script>
     <script>
-        // Page-specific initialization for CGPA
         document.addEventListener('DOMContentLoaded', () => {
             window.szabist.initPage('cgpa');
         });
