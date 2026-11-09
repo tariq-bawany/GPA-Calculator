@@ -381,6 +381,8 @@
 
       if (!wrap || !valueEl) return;
 
+      const wasHidden = wrap.classList.contains('hidden');
+
       // Animate number
       valueEl.textContent = gpa.toFixed(2);
       valueEl.classList.remove('count-up');
@@ -393,6 +395,11 @@
       if (creditsEl) creditsEl.textContent = credits;
 
       wrap.classList.remove('hidden');
+
+      // Scroll into view when the result first becomes visible (auto-calc or manual)
+      if (wasHidden) {
+        scrollToResult();
+      }
 
       trackEvent('result_shown', { tool: type, gpa: gpa.toFixed(2) });
     }
@@ -727,6 +734,8 @@
 
       if (!wrap || !valueEl) return;
 
+      const wasHidden = wrap.classList.contains('hidden');
+
       valueEl.textContent = gpa.toFixed(2);
       valueEl.classList.remove('count-up');
       void valueEl.offsetWidth;
@@ -739,6 +748,11 @@
       if (semEl) semEl.textContent = semesters;
 
       wrap.classList.remove('hidden');
+
+      // Scroll into view when the result first becomes visible (auto-calc or manual)
+      if (wasHidden) {
+        scrollToCgpaResult();
+      }
 
       trackEvent('result_shown', { tool: type, gpa: gpa.toFixed(2) });
     }
