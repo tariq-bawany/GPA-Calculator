@@ -382,6 +382,7 @@
       if (!wrap || !valueEl) return;
 
       const wasHidden = wrap.classList.contains('hidden');
+      const plaque = wrap.querySelector('.result-plaque');
 
       // Animate number
       valueEl.textContent = gpa.toFixed(2);
@@ -395,6 +396,13 @@
       if (creditsEl) creditsEl.textContent = credits;
 
       wrap.classList.remove('hidden');
+
+      // Restart plaque fade-in animation when result first becomes visible
+      if (wasHidden && plaque) {
+        plaque.style.animation = 'none';
+        void plaque.offsetHeight; // force reflow
+        plaque.style.animation = '';
+      }
 
       // Scroll into view when the result first becomes visible (auto-calc or manual)
       if (wasHidden) {
@@ -735,6 +743,7 @@
       if (!wrap || !valueEl) return;
 
       const wasHidden = wrap.classList.contains('hidden');
+      const plaque = wrap.querySelector('.result-plaque');
 
       valueEl.textContent = gpa.toFixed(2);
       valueEl.classList.remove('count-up');
@@ -748,6 +757,13 @@
       if (semEl) semEl.textContent = semesters;
 
       wrap.classList.remove('hidden');
+
+      // Restart plaque fade-in animation when result first becomes visible
+      if (wasHidden && plaque) {
+        plaque.style.animation = 'none';
+        void plaque.offsetHeight; // force reflow
+        plaque.style.animation = '';
+      }
 
       // Scroll into view when the result first becomes visible (auto-calc or manual)
       if (wasHidden) {

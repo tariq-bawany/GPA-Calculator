@@ -1132,8 +1132,6 @@ select.input-field option {
 .result-plaque {
   animation: pageFlip var(--transition-page) ease-out both;
   animation-delay: 100ms;
-  opacity: 0;
-  animation-fill-mode: forwards;
 }
 
 /* ------------------------------------------------------------------ */
