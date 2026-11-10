@@ -1009,15 +1009,14 @@ select.input-field option {
   align-items: center;
   justify-content: center;
   margin: var(--space-lg) 0;
-  border: 1px dashed var(--color-border);
+  border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
-  background: rgba(212, 197, 169, 0.1);
+  background: var(--color-surface-light);
   color: var(--color-text-muted);
   font-family: var(--font-body);
   font-size: var(--font-size-xs);
   text-align: center;
-  overflow: hidden;
-  transition: height var(--transition-fast), opacity var(--transition-fast);
+  overflow: visible;
 }
 
 .ad-slot--leaderboard { height: var(--ad-slot-height-leaderboard); min-height: var(--ad-slot-height-leaderboard); }
@@ -1031,26 +1030,30 @@ select.input-field option {
   margin: 0;
   border: none;
   opacity: 0;
+  visibility: hidden;
 }
 
 .ad-slot.ad-loaded {
-  border-style: solid;
+  display: block;
+  visibility: visible;
+  opacity: 1 !important;
+  border: 1px solid var(--color-primary);
   background: var(--color-surface);
-  opacity: 1;
+  margin: var(--space-lg) 0;
 }
 
 /* Ensure loaded ad slots maintain their size-specific heights */
 .ad-slot.ad-loaded.ad-slot--leaderboard {
-  height: var(--ad-slot-height-leaderboard);
-  min-height: var(--ad-slot-height-leaderboard);
+  height: var(--ad-slot-height-leaderboard) !important;
+  min-height: var(--ad-slot-height-leaderboard) !important;
 }
 .ad-slot.ad-loaded.ad-slot--mrect {
-  height: var(--ad-slot-height-mrect);
-  min-height: var(--ad-slot-height-mrect);
+  height: var(--ad-slot-height-mrect) !important;
+  min-height: var(--ad-slot-height-mrect) !important;
 }
 .ad-slot.ad-loaded.ad-slot--banner {
-  height: var(--ad-slot-height-banner);
-  min-height: var(--ad-slot-height-banner);
+  height: var(--ad-slot-height-banner) !important;
+  min-height: var(--ad-slot-height-banner) !important;
 }
 
 .ad-slot-placeholder {
