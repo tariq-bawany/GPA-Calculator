@@ -1036,6 +1036,21 @@ select.input-field option {
 .ad-slot.ad-loaded {
   border-style: solid;
   background: var(--color-surface);
+  opacity: 1;
+}
+
+/* Ensure loaded ad slots maintain their size-specific heights */
+.ad-slot.ad-loaded.ad-slot--leaderboard {
+  height: var(--ad-slot-height-leaderboard);
+  min-height: var(--ad-slot-height-leaderboard);
+}
+.ad-slot.ad-loaded.ad-slot--mrect {
+  height: var(--ad-slot-height-mrect);
+  min-height: var(--ad-slot-height-mrect);
+}
+.ad-slot.ad-loaded.ad-slot--banner {
+  height: var(--ad-slot-height-banner);
+  min-height: var(--ad-slot-height-banner);
 }
 
 .ad-slot-placeholder {
@@ -1059,6 +1074,8 @@ select.input-field option {
   font-size: var(--font-size-xs);
   text-align: center;
   overflow: hidden;
+  padding: var(--space-sm);
+  box-sizing: border-box;
 }
 
 .ad-format-leaderboard {
@@ -1078,13 +1095,16 @@ select.input-field option {
   text-transform: uppercase;
   letter-spacing: 0.05em;
   margin-bottom: var(--space-xs);
-  opacity: 0.5;
+  opacity: 0.7;
+  font-weight: 600;
 }
 
 .ad-placeholder-inner {
   font-family: var(--font-mono);
-  font-size: 0.75rem;
-  opacity: 0.4;
+  font-size: 0.8rem;
+  font-weight: 700;
+  opacity: 0.8;
+  color: var(--color-text);
 }
 
 /* Sticky bottom banner (mobile) */
