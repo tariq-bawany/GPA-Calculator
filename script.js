@@ -1,5 +1,5 @@
 /* ==========================================================================
-   SZABIST GPA Calculator — Application Logic (Phase 1)
+   SZABIST GPA Calculator — Application Logic
    Shared across all pages. Exposes window.szabist.initPage(pageType).
    ========================================================================== */
 
@@ -7,7 +7,7 @@
   'use strict';
 
   /* ------------------------------------------------------------------ */
-  /*  Grading scale (SZABIST undergraduate — confirmed)                 */
+  /*  Grading scale (SZABIST undergraduate — official)                  */
   /* ------------------------------------------------------------------ */
   const gradingScale = [
     { grade: 'A+', min: 90, max: 100, gpa: 4.0 },
@@ -28,27 +28,52 @@
   };
 
   const classification = [
-    { min: 3.75, label: "Dean's List",   badge: 'badge-dean' },
-    { min: 3.0,  label: 'Good Standing', badge: 'badge-good' },
-    { min: 2.0,  label: 'Satisfactory',  badge: 'badge-satisfactory' },
-    { min: 1.0,  label: 'On Probation',  badge: 'badge-probation' },
+    { min: 3.75, label: "Dean's List",      badge: 'badge-dean' },
+    { min: 3.0,  label: 'Good Standing',    badge: 'badge-good' },
+    { min: 2.0,  label: 'Satisfactory',     badge: 'badge-satisfactory' },
+    { min: 1.0,  label: 'On Probation',     badge: 'badge-probation' },
     { min: 0.0,  label: 'Academic Warning', badge: 'badge-warning' },
   ];
 
   const STORAGE_KEY = 'szabistGPA_v2';
   const CONSENT_KEY = 'szabistConsent_v2';
+  const THEME_KEY = 'szabistTheme_v2';
+
+  let uidCounter = 0;
+  function uid() {
+    uidCounter += 1;
+    return `id_${Date.now().toString(36)}_${uidCounter.toString(36)}_${Math.random().toString(36).slice(2, 6)}`;
+  }
+
+  function createBlankCourse() {
+    return {
+      id: uid(),
+      name: '',
+      credits: '',
+      grade: 'A+',
+      percentage: '',
+    };
+  }
+
+  function createBlankSemester() {
+    return {
+      id: uid(),
+      name: '',
+      courses: [createBlankCourse()],
+    };
+  }
 
   /* ------------------------------------------------------------------ */
   /*  State                                                             */
   /* ------------------------------------------------------------------ */
   let state = {
-    semesterMode: 'grade',   // 'grade' | 'percentage'
+    semesterMode: 'grade', // 'grade' | 'percentage'
     cgpaMode: 'grade',
     semesterCourses: [],
     semesters: [],
   };
 
-  let debounceTimers = {};
+  const debounceTimers = {};
 
   /* ------------------------------------------------------------------ */
   /*  Storage                                                           */
@@ -66,13 +91,13 @@
       const raw = localStorage.getItem(STORAGE_KEY);
       if (raw) {
         const parsed = JSON.parse(raw);
-        state.semesterMode = parsed.semesterMode || 'grade';
-        state.cgpaMode = parsed.cgpaMode || 'grade';
+        state.semesterMode = parsed.semesterMode === 'percentage' ? 'percentage' : 'grade';
+        state.cgpaMode = parsed.cgpaMode === 'percentage' ? 'percentage' : 'grade';
         state.semesterCourses = Array.isArray(parsed.semesterCourses) ? parsed.semesterCourses : [];
         state.semesters = Array.isArray(parsed.semesters) ? parsed.semesters : [];
       }
     } catch (e) {
-      // Corrupt storage — reset
+      // Corrupt storage — reset safely
     }
   }
 
@@ -82,16 +107,22 @@
   function getConsent() {
     try {
       const raw = localStorage.getItem(CONSENT_KEY);
-      if (raw === null) return null; // not asked yet
-      return JSON.parse(raw).tracking === true;
+      if (raw === null) return true; // Cookieless anonymous tracking enabled unless opted out
+      return JSON.parse(raw).tracking !== false;
     } catch (e) {
-      return null;
+      return true;
     }
   }
 
   function setConsent(granted) {
+    const allowed = Boolean(granted);
     try {
-      localStorage.setItem(CONSENT_KEY, JSON.stringify({ tracking: granted, at: Date.now() }));
+      localStorage.setItem(CONSENT_KEY, JSON.stringify({ tracking: allowed, at: Date.now() }));
+      if (allowed) {
+        localStorage.removeItem('umami.disabled');
+      } else {
+        localStorage.setItem('umami.disabled', '1');
+      }
     } catch (e) {
       // ignore
     }
@@ -104,8 +135,7 @@
     typeof window.umami !== 'undefined' && typeof window.umami.track === 'function';
 
   function trackEvent(eventName, data = {}) {
-    const consent = getConsent();
-    if (consent === false) return; // user opted out
+    if (!getConsent()) return;
 
     const payload = { ...data };
 
@@ -114,11 +144,9 @@
       return;
     }
 
-    // Queue until Umami loads
     window.szabistAnalyticsQueue = window.szabistAnalyticsQueue || [];
     window.szabistAnalyticsQueue.push({ eventName, payload });
 
-    // Process queued events once Umami is ready (only once)
     if (!window.szabistAnalyticsProcessing) {
       window.szabistAnalyticsProcessing = true;
       const wait = setInterval(() => {
@@ -141,10 +169,18 @@
   /* ------------------------------------------------------------------ */
   /*  Calculation helpers                                               */
   /* ------------------------------------------------------------------ */
+  function hasNumericValue(val) {
+    if (val === '' || val === null || val === undefined) return false;
+    return !Number.isNaN(parseFloat(String(val).trim()));
+  }
+
   function percentageToGPA(percentage) {
-    const p = Math.min(100, Math.max(0, parseFloat(percentage) || 0));
+    const parsed = parseFloat(percentage);
+    if (Number.isNaN(parsed)) return { grade: 'F', gpa: 0.0 };
+    const clamped = Math.min(100, Math.max(0, parsed));
+    const rounded = Math.round(clamped);
     for (const scale of gradingScale) {
-      if (p >= scale.min && p <= scale.max) {
+      if (rounded >= scale.min) {
         return { grade: scale.grade, gpa: scale.gpa };
       }
     }
@@ -158,9 +194,10 @@
     return classification[classification.length - 1];
   }
 
-  function calculateCourses(courses, mode) {
+  function evaluateCourses(courses, mode) {
     let totalPoints = 0;
     let totalCredits = 0;
+    let validCount = 0;
 
     for (const course of courses) {
       const credits = parseInt(course.credits, 10) || 0;
@@ -168,16 +205,25 @@
 
       let gpa;
       if (mode === 'grade') {
-        gpa = gradeToGPA[course.grade] || 0;
+        gpa = Object.prototype.hasOwnProperty.call(gradeToGPA, course.grade)
+          ? gradeToGPA[course.grade]
+          : 0;
       } else {
+        if (!hasNumericValue(course.percentage)) continue;
         gpa = percentageToGPA(course.percentage).gpa;
       }
 
       totalPoints += credits * gpa;
       totalCredits += credits;
+      validCount += 1;
     }
 
-    return totalCredits > 0 ? totalPoints / totalCredits : 0;
+    return {
+      gpa: totalCredits > 0 ? totalPoints / totalCredits : 0,
+      totalPoints,
+      totalCredits,
+      validCount,
+    };
   }
 
   /* ------------------------------------------------------------------ */
@@ -196,7 +242,7 @@
     const container = ensureToastContainer();
     const toast = document.createElement('div');
     toast.className = `toast toast--${type}`;
-    toast.setAttribute('role', 'alert');
+    toast.setAttribute('role', 'status');
     toast.textContent = message;
     container.appendChild(toast);
 
@@ -204,30 +250,48 @@
       toast.style.opacity = '0';
       toast.style.transform = 'translateX(100%)';
       setTimeout(() => toast.remove(), 300);
-    }, 3500);
+    }, 3200);
   }
 
   /* ------------------------------------------------------------------ */
-  /*  Ad slot helpers (reserved — inactive by default)                  */
+  /*  Reserved placement slot helpers (prototype & live-swap ready)     */
   /* ------------------------------------------------------------------ */
-  function activateAdSlot(slotId) {
+  function syncDockBodyState() {
+    const activeDock = document.querySelector('.dock-frame:not(.slot-frame--collapsed)');
+    document.body.classList.toggle('has-dock', Boolean(activeDock));
+  }
+
+  function initPlacementSlots() {
+    document.querySelectorAll('[data-dismiss-dock]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const targetId = btn.getAttribute('data-dismiss-dock');
+        const dock = targetId ? document.getElementById(targetId) : btn.closest('.dock-frame');
+        if (dock) {
+          dock.classList.add('slot-frame--collapsed');
+          dock.classList.remove('slot-frame--active');
+          syncDockBodyState();
+          trackEvent('dock_dismissed', { slot: dock.id || 'dock' });
+        }
+      });
+    });
+
+    syncDockBodyState();
+  }
+
+  function activateSlot(slotId, contentHtml) {
     const slot = document.getElementById(slotId);
     if (!slot) return;
-    slot.classList.remove('empty');
-    slot.classList.add('ad-loaded');
-    slot.innerHTML = '';
-    // Future: inject ad network script here. Layout is already reserved.
-  }
-
-  function collapseEmptySlots() {
-    document.querySelectorAll('.ad-slot.empty').forEach((slot) => {
-      slot.style.height = '0';
-      slot.style.minHeight = '0';
-      slot.style.padding = '0';
-      slot.style.margin = '0';
-      slot.style.border = 'none';
-      slot.style.opacity = '0';
-    });
+    slot.classList.remove('slot-frame--collapsed');
+    slot.classList.add('slot-frame--active');
+    if (typeof contentHtml === 'string') {
+      const preview = slot.querySelector('.slot-preview');
+      if (preview) {
+        preview.outerHTML = contentHtml;
+      } else {
+        slot.insertAdjacentHTML('beforeend', contentHtml);
+      }
+    }
+    syncDockBodyState();
   }
 
   /* ------------------------------------------------------------------ */
@@ -235,22 +299,39 @@
   /* ------------------------------------------------------------------ */
   const optionsMarkup = (selectedGrade) =>
     Object.keys(gradeToGPA)
-      .map((g) => `<option value="${g}" ${g === selectedGrade ? 'selected' : ''}>${g}</option>`)
+      .map((g) => `<option value="${g}" ${g === selectedGrade ? 'selected' : ''}>${g} (${gradeToGPA[g].toFixed(2)})</option>`)
       .join('');
 
-  function performanceInput(mode, value, onChange, placeholder = '') {
+  function performanceInputMarkup(mode, course) {
     if (mode === 'grade') {
       return `
-        <select class="input-field" onchange="${onChange}" aria-label="Grade">
-          ${optionsMarkup(value || 'A+')}
+        <select class="input-field" data-field="grade" aria-label="Grade">
+          ${optionsMarkup(course.grade || 'A+')}
         </select>
       `;
     }
     return `
-      <input type="number" min="0" max="100" value="${value || ''}"
+      <input type="number" min="0" max="100" step="any"
+             value="${escapeHtml(String(course.percentage ?? ''))}"
              placeholder="0–100" class="input-field text-center"
-             onchange="${onChange}" aria-label="Percentage">
+             data-field="percentage" aria-label="Percentage">
     `;
+  }
+
+  function clampFieldInput(field, rawValue) {
+    const trimmed = String(rawValue ?? '').trim();
+    if (trimmed === '') return '';
+    if (field === 'credits') {
+      const parsed = parseInt(trimmed, 10);
+      if (Number.isNaN(parsed)) return '';
+      return Math.max(0, Math.min(6, parsed));
+    }
+    if (field === 'percentage') {
+      const parsed = parseFloat(trimmed);
+      if (Number.isNaN(parsed)) return '';
+      return Math.min(100, Math.max(0, parsed));
+    }
+    return rawValue;
   }
 
   /* ------------------------------------------------------------------ */
@@ -270,68 +351,48 @@
     const emptyState = document.getElementById('semesterEmptyState');
     const modeInput = document.getElementById('semesterModeInput');
 
-    // Restore toggle UI
-    if (state.semesterMode === 'percentage') {
-      toggle.classList.add('percentage');
-      modeInput.checked = true;
-      gradeLabel.classList.remove('active');
-      gradeLabel.classList.add('inactive');
-      percentLabel.classList.remove('inactive');
-      percentLabel.classList.add('active');
-      perfLabel.textContent = 'Percentage';
-    } else {
-      modeInput.checked = false;
+    function syncModeUI() {
+      const isPercent = state.semesterMode === 'percentage';
+      toggle.classList.toggle('percentage', isPercent);
+      toggle.setAttribute('aria-checked', String(isPercent));
+      if (modeInput) modeInput.checked = isPercent;
+      gradeLabel.classList.toggle('active', !isPercent);
+      gradeLabel.classList.toggle('inactive', isPercent);
+      percentLabel.classList.toggle('active', isPercent);
+      percentLabel.classList.toggle('inactive', !isPercent);
+      if (perfLabel) perfLabel.textContent = isPercent ? 'Percentage' : 'Grade';
     }
 
-    // Render
-    function render() {
-      if (!container) return;
-      container.innerHTML = state.semesterCourses
-        .map((c, i) => courseRowMarkup('semester', c.id, c, i))
-        .join('');
-      attachCourseListeners();
-      updateEmptyState();
-    }
-
-    function updateEmptyState() {
-      if (!emptyState) return;
-      emptyState.classList.toggle('hidden', state.semesterCourses.length > 0);
-    }
-
-    function courseRowMarkup(type, id, course, index) {
-      const isPercentage = state[type === 'cgpa' ? 'cgpaMode' : 'semesterMode'] === 'percentage';
-      const onChange = `window.szabist.updateCourse('${type}', ${id}, 'percentage', this.value)`;
-      const onSelect = `window.szabist.updateCourse('${type}', ${id}, 'grade', this.value)`;
-      const perf = isPercentage
-        ? performanceInput('percentage', course.percentage, onChange)
-        : performanceInput('grade', course.grade, onSelect);
+    function courseRowMarkup(course, index) {
+      const isPercentage = state.semesterMode === 'percentage';
+      const idStr = escapeHtml(String(course.id));
 
       return `
-        <div class="course-row" data-id="${id}">
+        <div class="course-row" data-course-id="${idStr}">
           <div class="flex flex-col">
             <label class="input-label md:hidden">Course Name</label>
             <input type="text" value="${escapeHtml(course.name || '')}"
-                   placeholder="Course name"
-                   onchange="window.szabist.updateCourse('${type}', ${id}, 'name', this.value)"
+                   placeholder="e.g. Programming Fundamentals"
+                   data-field="name" aria-label="Course name"
                    class="input-field">
           </div>
           <div class="flex flex-col">
             <label class="input-label md:hidden">Credit Hours</label>
-            <input type="number" min="0" max="6" value="${escapeHtml(course.credits || '')}"
-                   placeholder="Credits"
-                   onchange="window.szabist.updateCourse('${type}', ${id}, 'credits', this.value)"
+            <input type="number" min="0" max="6" step="1"
+                   value="${escapeHtml(String(course.credits ?? ''))}"
+                   placeholder="1–6" data-field="credits" aria-label="Credit hours"
                    class="input-field text-center">
           </div>
           <div class="flex flex-col">
             <label class="input-label md:hidden">${isPercentage ? 'Percentage' : 'Grade'}</label>
-            ${perf}
+            ${performanceInputMarkup(state.semesterMode, course)}
           </div>
           <div class="course-actions">
-            <button type="button" class="btn-icon"
-                    onclick="window.szabist.removeCourse('${type}', ${id})"
+            <button type="button" class="btn-icon btn-icon--danger"
+                    data-action="remove-course"
                     title="Remove course"
                     aria-label="Remove course ${index + 1}">
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                       d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
               </svg>
@@ -341,173 +402,174 @@
       `;
     }
 
-    function attachCourseListeners() {
-      document.querySelectorAll('#semesterCourses .course-row').forEach((row) => {
-        const id = Number(row.dataset.id);
-        const inputs = row.querySelectorAll('input, select');
-        inputs.forEach((input) => {
-          input.addEventListener('input', () => {
-            scheduleCalc('semester');
-          });
-          input.addEventListener('change', () => {
-            saveToStorage();
-          });
-        });
-      });
+    function updateEmptyState() {
+      if (!emptyState) return;
+      emptyState.classList.toggle('hidden', state.semesterCourses.length > 0);
     }
 
-    function scheduleCalc(type) {
-      clearTimeout(debounceTimers[type]);
-      debounceTimers[type] = setTimeout(() => {
-        calculateAndShow(type);
-      }, 300);
+    function render() {
+      if (!container) return;
+      container.innerHTML = state.semesterCourses
+        .map((c, i) => courseRowMarkup(c, i))
+        .join('');
+      updateEmptyState();
     }
 
-    function calculateAndShow(type) {
-      if (type === 'semester') {
-        const gpa = calculateCourses(state.semesterCourses, state.semesterMode);
-        const credits = state.semesterCourses.reduce(
-          (sum, c) => sum + (parseInt(c.credits, 10) || 0), 0
-        );
-        showResult('semester', gpa, credits);
-      }
+    function scrollToResult() {
+      if (resultWrap) resultWrap.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
 
-    function showResult(type, gpa, credits) {
-      const wrap = document.getElementById(`${type}Result`);
-      const valueEl = document.getElementById(`${type === 'semester' ? 'semesterGPAValue' : 'cgpaValue'}`);
-      const badgeEl = document.getElementById(`${type === 'semester' ? 'semesterGradeBadge' : 'cgpaGradeBadge'}`);
-      const creditsEl = document.getElementById(type === 'semester' ? 'semesterCreditsValue' : 'cgpaCreditsValue');
+    function showResult(gpa, credits, options = {}) {
+      const valueEl = document.getElementById('semesterGPAValue');
+      const badgeEl = document.getElementById('semesterGradeBadge');
+      const creditsEl = document.getElementById('semesterCreditsValue');
+      if (!resultWrap || !valueEl) return;
 
-      if (!wrap || !valueEl) return;
+      const wasHidden = resultWrap.classList.contains('hidden');
+      const plaque = resultWrap.querySelector('.result-plaque');
 
-      const wasHidden = wrap.classList.contains('hidden');
-      const plaque = wrap.querySelector('.result-plaque');
-
-      // Animate number
       valueEl.textContent = gpa.toFixed(2);
       valueEl.classList.remove('count-up');
       void valueEl.offsetWidth;
       valueEl.classList.add('count-up');
 
       const cls = gpaClassification(gpa);
-      badgeEl.textContent = cls.label;
-      badgeEl.className = `badge ${cls.badge}`;
-      if (creditsEl) creditsEl.textContent = credits;
+      if (badgeEl) {
+        badgeEl.textContent = cls.label;
+        badgeEl.className = `badge ${cls.badge}`;
+      }
+      if (creditsEl) creditsEl.textContent = String(credits);
 
-      wrap.classList.remove('hidden');
+      resultWrap.classList.remove('hidden');
 
-      // Restart plaque fade-in animation when result first becomes visible
       if (wasHidden && plaque) {
         plaque.style.animation = 'none';
-        void plaque.offsetHeight; // force reflow
+        void plaque.offsetHeight;
         plaque.style.animation = '';
       }
 
-      // Scroll into view when the result first becomes visible (auto-calc or manual)
-      if (wasHidden) {
+      if (wasHidden && !options.initialLoad) {
         scrollToResult();
       }
 
-      trackEvent('result_shown', { tool: type, gpa: gpa.toFixed(2) });
-    }
-
-    function scrollToResult() {
-      const wrap = document.getElementById('semesterResult');
-      if (wrap) wrap.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }
-
-    // Toggle mode
-    toggle.addEventListener('click', () => {
-      state.semesterMode = state.semesterMode === 'grade' ? 'percentage' : 'grade';
-      modeInput.checked = state.semesterMode === 'percentage';
-
-      if (state.semesterMode === 'percentage') {
-        toggle.classList.add('percentage');
-        gradeLabel.classList.remove('active'); gradeLabel.classList.add('inactive');
-        percentLabel.classList.remove('inactive'); percentLabel.classList.add('active');
-        perfLabel.textContent = 'Percentage';
-      } else {
-        toggle.classList.remove('percentage');
-        gradeLabel.classList.remove('inactive'); gradeLabel.classList.add('active');
-        percentLabel.classList.remove('active'); percentLabel.classList.add('inactive');
-        perfLabel.textContent = 'Grade';
+      if (!options.initialLoad) {
+        trackEvent('result_shown', { tool: 'semester', gpa: gpa.toFixed(2) });
       }
+    }
 
+    function calculateAndShow(options = {}) {
+      const { gpa, totalCredits } = evaluateCourses(state.semesterCourses, state.semesterMode);
+      if (totalCredits <= 0) {
+        if (resultWrap) resultWrap.classList.add('hidden');
+        return { gpa: 0, totalCredits: 0 };
+      }
+      showResult(gpa, totalCredits, options);
+      return { gpa, totalCredits };
+    }
+
+    function scheduleCalc() {
+      clearTimeout(debounceTimers.semester);
+      debounceTimers.semester = setTimeout(() => {
+        calculateAndShow();
+      }, 250);
+    }
+
+    // Event delegation for real-time input, clamping on blur, and course removal
+    container.addEventListener('input', (e) => {
+      const target = e.target;
+      const field = target.getAttribute('data-field');
+      if (!field) return;
+      const row = target.closest('.course-row');
+      if (!row) return;
+      const id = row.getAttribute('data-course-id');
+      const course = state.semesterCourses.find((c) => String(c.id) === String(id));
+      if (!course) return;
+
+      course[field] = target.value;
+      saveToStorage();
+      if (field !== 'name') {
+        scheduleCalc();
+      }
+    });
+
+    container.addEventListener('change', (e) => {
+      const target = e.target;
+      const field = target.getAttribute('data-field');
+      if (!field) return;
+      const row = target.closest('.course-row');
+      if (!row) return;
+      const id = row.getAttribute('data-course-id');
+      const course = state.semesterCourses.find((c) => String(c.id) === String(id));
+      if (!course) return;
+
+      if (field === 'credits' || field === 'percentage') {
+        const clamped = clampFieldInput(field, target.value);
+        course[field] = clamped;
+        target.value = clamped === '' ? '' : String(clamped);
+      } else {
+        course[field] = target.value;
+      }
+      saveToStorage();
+      if (field !== 'name') {
+        calculateAndShow();
+      }
+    });
+
+    container.addEventListener('click', (e) => {
+      const removeBtn = e.target.closest('[data-action="remove-course"]');
+      if (!removeBtn) return;
+      const row = removeBtn.closest('.course-row');
+      if (!row) return;
+      const id = row.getAttribute('data-course-id');
+
+      state.semesterCourses = state.semesterCourses.filter((c) => String(c.id) !== String(id));
+      if (state.semesterCourses.length === 0) {
+        state.semesterCourses.push(createBlankCourse());
+      }
       saveToStorage();
       render();
-      scheduleCalc('semester');
+      calculateAndShow();
+      showToast('Course removed');
+      trackEvent('course_removed', { tool: 'semester_gpa' });
+    });
 
+    // Mode toggle
+    toggle.addEventListener('click', (e) => {
+      if (e.target !== modeInput) {
+        e.preventDefault();
+      }
+      state.semesterMode = state.semesterMode === 'grade' ? 'percentage' : 'grade';
+      syncModeUI();
+      saveToStorage();
+      render();
+      calculateAndShow();
       trackEvent('mode_toggled', { tool: 'semester_gpa', mode: state.semesterMode });
     });
 
-    // Add course — insert at top so the new row appears immediately
-    // under the Add Course button (no scrolling down required)
+    // Add course (inserts at top under Add Course button)
     addBtn.addEventListener('click', () => {
-      const course = {
-        id: Date.now() + Math.random(),
-        name: '',
-        credits: '',
-        grade: 'A+',
-        percentage: '',
-      };
-      state.semesterCourses.unshift(course);
+      state.semesterCourses.unshift(createBlankCourse());
       saveToStorage();
       render();
-      // Scroll to the newly added course row (now the first row)
-      const firstRow = container.querySelector('.course-row');
-      if (firstRow) firstRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      const firstInput = container.querySelector('.course-row input[data-field="name"]');
+      if (firstInput) firstInput.focus({ preventScroll: false });
       showToast('Course added');
       trackEvent('course_added', { tool: 'semester_gpa' });
     });
 
-    window.szabist.updateCourse = (type, id, field, value) => {
-      if (type !== 'semester') return;
-
-      const course = state.semesterCourses.find((c) => c.id === id);
-      if (!course) return;
-
-        if (field === 'credits') {
-          course.credits = Math.max(0, Math.min(6, parseInt(value, 10) || 0));
-        } else if (field === 'percentage') {
-          course.percentage = Math.min(100, Math.max(0, parseFloat(value) || 0));
-        } else if (field === 'name') {
-          course.name = value;
-        } else if (field === 'grade') {
-          course.grade = value;
-        }
-        saveToStorage();
-        scheduleCalc('semester');
-    };
-
-    window.szabist.removeCourse = (type, id) => {
-      if (type === 'semester') {
-        state.semesterCourses = state.semesterCourses.filter((c) => c.id !== id);
-        if (state.semesterCourses.length === 0) {
-          state.semesterCourses.push({
-            id: Date.now() + Math.random(), name: '', credits: '', grade: 'A+', percentage: '',
-          });
-        }
-        saveToStorage();
-        render();
-        showToast('Course removed');
-        trackEvent('course_removed', { tool: 'semester_gpa' });
-      }
-    };
-
     // Calculate button
     calcBtn.addEventListener('click', () => {
-      calculateAndShow('semester');
+      const { gpa, totalCredits } = calculateAndShow();
+      if (totalCredits <= 0) {
+        showToast('Enter credit hours for at least one course first', 'error');
+        return;
+      }
       scrollToResult();
-      const gpa = calculateCourses(state.semesterCourses, state.semesterMode);
-      const credits = state.semesterCourses.reduce(
-        (sum, c) => sum + (parseInt(c.credits, 10) || 0), 0
-      );
       trackEvent('calculation_completed', {
         tool: 'semester_gpa',
-        gpa,
+        gpa: Number(gpa.toFixed(2)),
         gpa_bucket: gpaBucket(gpa),
-        credits,
+        credits: totalCredits,
         mode: state.semesterMode,
       });
     });
@@ -515,13 +577,10 @@
     // Clear all
     clearBtn.addEventListener('click', () => {
       if (confirm('Clear all course data? This cannot be undone.')) {
-        state.semesterCourses = [];
-        state.semesterCourses.push({
-          id: Date.now() + Math.random(), name: '', credits: '', grade: 'A+', percentage: '',
-        });
+        state.semesterCourses = [createBlankCourse()];
         saveToStorage();
         render();
-        document.getElementById('semesterResult').classList.add('hidden');
+        if (resultWrap) resultWrap.classList.add('hidden');
         showToast('Data cleared');
         trackEvent('data_cleared', { tool: 'semester_gpa' });
       }
@@ -541,7 +600,7 @@
       } else {
         try {
           await navigator.clipboard.writeText(text);
-          showToast('Result copied to clipboard');
+          showToast('Result copied to clipboard', 'success');
           trackEvent('result_shared', { tool: 'semester_gpa', method: 'clipboard' });
         } catch (e) {
           showToast('Unable to copy result', 'error');
@@ -549,12 +608,14 @@
       }
     });
 
-    // Init
-    loadFromStorage();
+    // Initial render
+    if (state.semesterCourses.length === 0) {
+      state.semesterCourses = [createBlankCourse()];
+    }
+    syncModeUI();
     render();
-    calculateAndShow('semester');
+    calculateAndShow({ initialLoad: true });
 
-    // Track page view (Umami auto-tracks, but fire custom)
     trackEvent('calculator_started', { tool: 'semester_gpa' });
   }
 
@@ -573,113 +634,54 @@
     const resultWrap = document.getElementById('cgpaResult');
     const modeInput = document.getElementById('cgpaModeInput');
 
-    if (state.cgpaMode === 'percentage') {
-      toggle.classList.add('percentage');
-      modeInput.checked = true;
-      gradeLabel.classList.remove('active'); gradeLabel.classList.add('inactive');
-      percentLabel.classList.remove('inactive'); percentLabel.classList.add('active');
-    } else {
-      modeInput.checked = false;
+    function syncModeUI() {
+      const isPercent = state.cgpaMode === 'percentage';
+      toggle.classList.toggle('percentage', isPercent);
+      toggle.setAttribute('aria-checked', String(isPercent));
+      if (modeInput) modeInput.checked = isPercent;
+      gradeLabel.classList.toggle('active', !isPercent);
+      gradeLabel.classList.toggle('inactive', isPercent);
+      percentLabel.classList.toggle('active', isPercent);
+      percentLabel.classList.toggle('inactive', !isPercent);
     }
 
     function updateAddButton() {
       if (!addBtn) return;
-      if (state.semesters.length >= 8) {
-        addBtn.disabled = true;
-        addBtn.classList.add('opacity-50', 'cursor-not-allowed');
-      } else {
-        addBtn.disabled = false;
-        addBtn.classList.remove('opacity-50', 'cursor-not-allowed');
-      }
+      const maxed = state.semesters.length >= 8;
+      addBtn.disabled = maxed;
+      addBtn.classList.toggle('opacity-50', maxed);
+      addBtn.classList.toggle('cursor-not-allowed', maxed);
     }
 
-    function render() {
-      if (!container) return;
-      container.innerHTML = state.semesters.map((s) => semesterCardMarkup(s)).join('');
-      attachCgpaListeners();
-      updateAddButton();
-    }
-
-    function semesterCardMarkup(semester) {
+    function cgpaCourseRowMarkup(course, index) {
       const isPercentage = state.cgpaMode === 'percentage';
-      const coursesHtml = semester.courses.map((c) => cgpaCourseRowMarkup(semester.id, c)).join('');
-      const deleteBtn = state.semesters.length > 1
-        ? `<button type="button" class="btn-icon btn-icon--danger"
-                   onclick="window.szabist.removeSemester(${semester.id})"
-                   title="Remove semester" aria-label="Remove semester ${escapeHtml(semester.name || 'Untitled')}">
-             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                     d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-             </svg>
-           </button>`
-        : '';
+      const cid = escapeHtml(String(course.id));
 
       return `
-        <div class="semester-card card card-lg" data-id="${semester.id}">
-          <div class="semester-card-header">
-            <input type="text" value="${escapeHtml(semester.name || '')}"
-                   placeholder="Semester No."
-                   onchange="window.szabist.updateSemesterName(${semester.id}, this.value)"
-                   class="semester-title-input">
-            <div class="semester-actions">
-              <button type="button" class="btn-icon btn-icon--brass"
-                      onclick="window.szabist.addCgpaCourse(${semester.id})"
-                      title="Add course" aria-label="Add course to ${escapeHtml(semester.name || 'semester')}">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-                </svg>
-              </button>
-              ${deleteBtn}
-            </div>
-          </div>
-          <div class="course-header">
-            <div>Course Name</div>
-            <div class="text-center">Credits</div>
-            <div class="text-center">${isPercentage ? 'Percentage' : 'Grade'}</div>
-            <div></div>
-          </div>
-          <div class="course-list space-y-sm max-h-64 overflow-y-auto scrollbar-scholarly pr-2">
-            ${coursesHtml}
-          </div>
-        </div>
-      `;
-    }
-
-    function cgpaCourseRowMarkup(semesterId, course) {
-      const isPercentage = state.cgpaMode === 'percentage';
-      const onChange = `window.szabist.updateCgpaCourseValue(${semesterId}, ${course.id}, this.value)`;
-      const onSelect = `window.szabist.updateCgpaCourseGrade(${semesterId}, ${course.id}, this.value)`;
-      const perf = isPercentage
-        ? `<input type="number" min="0" max="100" value="${escapeHtml(course.percentage || '')}"
-                  placeholder="0–100" class="input-field text-center" onchange="${onChange}">`
-        : `<select class="input-field" onchange="${onSelect}">${optionsMarkup(course.grade || 'A+')}</select>`;
-
-      return `
-        <div class="course-row" data-id="${course.id}">
+        <div class="course-row" data-course-id="${cid}">
           <div class="flex flex-col">
             <label class="input-label md:hidden">Course Name</label>
             <input type="text" value="${escapeHtml(course.name || '')}"
                    placeholder="Course name"
-                   onchange="window.szabist.updateCgpaCourseName(${semesterId}, ${course.id}, this.value)"
+                   data-field="name" aria-label="Course name"
                    class="input-field">
           </div>
           <div class="flex flex-col">
             <label class="input-label md:hidden">Credit Hours</label>
-            <input type="number" min="0" max="6" value="${escapeHtml(course.credits || '')}"
-                   placeholder="Credits"
-                   onchange="window.szabist.updateCgpaCourseCredits(${semesterId}, ${course.id}, this.value)"
+            <input type="number" min="0" max="6" step="1"
+                   value="${escapeHtml(String(course.credits ?? ''))}"
+                   placeholder="1–6" data-field="credits" aria-label="Credit hours"
                    class="input-field text-center">
           </div>
           <div class="flex flex-col">
             <label class="input-label md:hidden">${isPercentage ? 'Percentage' : 'Grade'}</label>
-            ${perf}
+            ${performanceInputMarkup(state.cgpaMode, course)}
           </div>
           <div class="course-actions">
-            <button type="button" class="btn-icon"
-                    onclick="window.szabist.removeCgpaCourse(${semesterId}, ${course.id})"
-                    title="Remove course" aria-label="Remove course">
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <button type="button" class="btn-icon btn-icon--danger"
+                    data-action="remove-cgpa-course"
+                    title="Remove course" aria-label="Remove course ${index + 1}">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                       d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
               </svg>
@@ -689,245 +691,298 @@
       `;
     }
 
-    function attachCgpaListeners() {
-      document.querySelectorAll('.semester-card').forEach((card) => {
-        const semesterId = Number(card.dataset.id);
-        card.querySelectorAll('input, select').forEach((input) => {
-          input.addEventListener('input', () => {
-            scheduleCalc('cgpa');
-          });
-          input.addEventListener('change', saveToStorage);
-        });
-      });
+    function semesterCardMarkup(semester, semIndex) {
+      const isPercentage = state.cgpaMode === 'percentage';
+      const sid = escapeHtml(String(semester.id));
+      const coursesHtml = semester.courses
+        .map((c, idx) => cgpaCourseRowMarkup(c, idx))
+        .join('');
+      const deleteBtn = state.semesters.length > 1
+        ? `<button type="button" class="btn-icon btn-icon--danger"
+                   data-action="remove-semester"
+                   title="Remove semester"
+                   aria-label="Remove ${escapeHtml(semester.name || `Semester ${semIndex + 1}`)}">
+             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                     d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+             </svg>
+           </button>`
+        : '';
+
+      return `
+        <div class="semester-card card card-lg" data-semester-id="${sid}">
+          <div class="card-body">
+            <div class="semester-card-header">
+              <input type="text" value="${escapeHtml(semester.name || '')}"
+                     placeholder="Semester ${semIndex + 1} (e.g. Fall 2026)"
+                     data-field="semester-name"
+                     aria-label="Semester ${semIndex + 1} title"
+                     class="semester-title-input">
+              <div class="semester-actions">
+                <button type="button" class="btn-icon btn-icon--brass"
+                        data-action="add-cgpa-course"
+                        title="Add course to semester"
+                        aria-label="Add course to ${escapeHtml(semester.name || `Semester ${semIndex + 1}`)}">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                  </svg>
+                </button>
+                ${deleteBtn}
+              </div>
+            </div>
+            <div class="course-header">
+              <div>Course Name</div>
+              <div class="text-center">Credits</div>
+              <div class="text-center">${isPercentage ? 'Percentage' : 'Grade'}</div>
+              <div></div>
+            </div>
+            <div class="course-list space-y-sm max-h-64 overflow-y-auto scrollbar-scholarly pr-2">
+              ${coursesHtml}
+            </div>
+          </div>
+        </div>
+      `;
     }
 
-    function scheduleCalc(type) {
-      clearTimeout(debounceTimers[type]);
-      debounceTimers[type] = setTimeout(() => {
-        calculateAndShow(type);
-      }, 300);
+    function render() {
+      if (!container) return;
+      container.innerHTML = state.semesters
+        .map((s, idx) => semesterCardMarkup(s, idx))
+        .join('');
+      updateAddButton();
     }
 
-    function calculateAndShow(type) {
-      if (type === 'cgpa') {
-        let totalPoints = 0;
-        let totalCredits = 0;
-        let semesterCount = 0;
+    function scrollToCgpaResult() {
+      if (resultWrap) resultWrap.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
 
-        for (const semester of state.semesters) {
-          let hasCourse = false;
-          for (const course of semester.courses) {
-            const credits = parseInt(course.credits, 10) || 0;
-            if (credits <= 0) continue;
-            hasCourse = true;
-            let gpa;
-            if (state.cgpaMode === 'grade') {
-              gpa = gradeToGPA[course.grade] || 0;
-            } else {
-              gpa = percentageToGPA(course.percentage).gpa;
-            }
-            totalPoints += credits * gpa;
-            totalCredits += credits;
-          }
-          if (hasCourse) semesterCount++;
+    function evaluateAllSemesters() {
+      let totalPoints = 0;
+      let totalCredits = 0;
+      let semesterCount = 0;
+
+      for (const semester of state.semesters) {
+        const res = evaluateCourses(semester.courses || [], state.cgpaMode);
+        if (res.totalCredits > 0) {
+          totalPoints += res.totalPoints;
+          totalCredits += res.totalCredits;
+          semesterCount += 1;
         }
-
-        const cgpa = totalCredits > 0 ? totalPoints / totalCredits : 0;
-        showResult('cgpa', cgpa, totalCredits, semesterCount);
       }
+
+      return {
+        cgpa: totalCredits > 0 ? totalPoints / totalCredits : 0,
+        totalCredits,
+        semesterCount,
+      };
     }
 
-    function showResult(type, gpa, credits, semesters) {
-      const wrap = document.getElementById(`${type}Result`);
-      const valueEl = document.getElementById(`${type === 'semester' ? 'semesterGPAValue' : 'cgpaValue'}`);
-      const badgeEl = document.getElementById(`${type === 'semester' ? 'semesterGradeBadge' : 'cgpaGradeBadge'}`);
-      const creditsEl = document.getElementById(`${type === 'semester' ? 'semesterCreditsValue' : 'cgpaCreditsValue'}`);
+    function showResult(cgpa, credits, semesters, options = {}) {
+      const valueEl = document.getElementById('cgpaValue');
+      const badgeEl = document.getElementById('cgpaGradeBadge');
+      const creditsEl = document.getElementById('cgpaCreditsValue');
       const semEl = document.getElementById('cgpaSemestersValue');
+      if (!resultWrap || !valueEl) return;
 
-      if (!wrap || !valueEl) return;
+      const wasHidden = resultWrap.classList.contains('hidden');
+      const plaque = resultWrap.querySelector('.result-plaque');
 
-      const wasHidden = wrap.classList.contains('hidden');
-      const plaque = wrap.querySelector('.result-plaque');
-
-      valueEl.textContent = gpa.toFixed(2);
+      valueEl.textContent = cgpa.toFixed(2);
       valueEl.classList.remove('count-up');
       void valueEl.offsetWidth;
       valueEl.classList.add('count-up');
 
-      const cls = gpaClassification(gpa);
-      badgeEl.textContent = cls.label;
-      badgeEl.className = `badge ${cls.badge}`;
-      if (creditsEl) creditsEl.textContent = credits;
-      if (semEl) semEl.textContent = semesters;
+      const cls = gpaClassification(cgpa);
+      if (badgeEl) {
+        badgeEl.textContent = cls.label;
+        badgeEl.className = `badge ${cls.badge}`;
+      }
+      if (creditsEl) creditsEl.textContent = String(credits);
+      if (semEl) semEl.textContent = String(semesters);
 
-      wrap.classList.remove('hidden');
+      resultWrap.classList.remove('hidden');
 
-      // Restart plaque fade-in animation when result first becomes visible
       if (wasHidden && plaque) {
         plaque.style.animation = 'none';
-        void plaque.offsetHeight; // force reflow
+        void plaque.offsetHeight;
         plaque.style.animation = '';
       }
 
-      // Scroll into view when the result first becomes visible (auto-calc or manual)
-      if (wasHidden) {
+      if (wasHidden && !options.initialLoad) {
         scrollToCgpaResult();
       }
 
-      trackEvent('result_shown', { tool: type, gpa: gpa.toFixed(2) });
+      if (!options.initialLoad) {
+        trackEvent('result_shown', { tool: 'cgpa', gpa: cgpa.toFixed(2) });
+      }
     }
 
-    function scrollToCgpaResult() {
-      const wrap = document.getElementById('cgpaResult');
-      if (wrap) wrap.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    function calculateAndShow(options = {}) {
+      const { cgpa, totalCredits, semesterCount } = evaluateAllSemesters();
+      if (totalCredits <= 0) {
+        if (resultWrap) resultWrap.classList.add('hidden');
+        return { cgpa: 0, totalCredits: 0, semesterCount: 0 };
+      }
+      showResult(cgpa, totalCredits, semesterCount, options);
+      return { cgpa, totalCredits, semesterCount };
     }
 
-    // Toggle mode
-    toggle.addEventListener('click', () => {
-      state.cgpaMode = state.cgpaMode === 'grade' ? 'percentage' : 'grade';
-      modeInput.checked = state.cgpaMode === 'percentage';
+    function scheduleCalc() {
+      clearTimeout(debounceTimers.cgpa);
+      debounceTimers.cgpa = setTimeout(() => {
+        calculateAndShow();
+      }, 250);
+    }
 
-      if (state.cgpaMode === 'percentage') {
-        toggle.classList.add('percentage');
-        gradeLabel.classList.remove('active'); gradeLabel.classList.add('inactive');
-        percentLabel.classList.remove('inactive'); percentLabel.classList.add('active');
-      } else {
-        toggle.classList.remove('percentage');
-        gradeLabel.classList.remove('inactive'); gradeLabel.classList.add('active');
-        percentLabel.classList.remove('active'); percentLabel.classList.add('inactive');
+    // Event delegation for semester & course inputs
+    container.addEventListener('input', (e) => {
+      const target = e.target;
+      const field = target.getAttribute('data-field');
+      if (!field) return;
+      const card = target.closest('.semester-card');
+      if (!card) return;
+      const sid = card.getAttribute('data-semester-id');
+      const semester = state.semesters.find((s) => String(s.id) === String(sid));
+      if (!semester) return;
+
+      if (field === 'semester-name') {
+        semester.name = target.value;
+        saveToStorage();
+        return;
       }
 
+      const row = target.closest('.course-row');
+      if (!row) return;
+      const cid = row.getAttribute('data-course-id');
+      const course = semester.courses.find((c) => String(c.id) === String(cid));
+      if (!course) return;
+
+      course[field] = target.value;
+      saveToStorage();
+      if (field !== 'name') {
+        scheduleCalc();
+      }
+    });
+
+    container.addEventListener('change', (e) => {
+      const target = e.target;
+      const field = target.getAttribute('data-field');
+      if (!field) return;
+      const card = target.closest('.semester-card');
+      if (!card) return;
+      const sid = card.getAttribute('data-semester-id');
+      const semester = state.semesters.find((s) => String(s.id) === String(sid));
+      if (!semester) return;
+
+      if (field === 'semester-name') {
+        semester.name = target.value;
+        saveToStorage();
+        return;
+      }
+
+      const row = target.closest('.course-row');
+      if (!row) return;
+      const cid = row.getAttribute('data-course-id');
+      const course = semester.courses.find((c) => String(c.id) === String(cid));
+      if (!course) return;
+
+      if (field === 'credits' || field === 'percentage') {
+        const clamped = clampFieldInput(field, target.value);
+        course[field] = clamped;
+        target.value = clamped === '' ? '' : String(clamped);
+      } else {
+        course[field] = target.value;
+      }
+      saveToStorage();
+      if (field !== 'name') {
+        calculateAndShow();
+      }
+    });
+
+    container.addEventListener('click', (e) => {
+      const actionBtn = e.target.closest('[data-action]');
+      if (!actionBtn) return;
+      const action = actionBtn.getAttribute('data-action');
+      const card = actionBtn.closest('.semester-card');
+      if (!card) return;
+      const sid = card.getAttribute('data-semester-id');
+      const semester = state.semesters.find((s) => String(s.id) === String(sid));
+      if (!semester) return;
+
+      if (action === 'add-cgpa-course') {
+        semester.courses.push(createBlankCourse());
+        saveToStorage();
+        render();
+        const safeSid = typeof CSS !== 'undefined' && typeof CSS.escape === 'function'
+          ? CSS.escape(String(sid))
+          : String(sid).replace(/["\\]/g, '\\$&');
+        const updatedCard = container.querySelector(`.semester-card[data-semester-id="${safeSid}"]`);
+        if (updatedCard) {
+          const lastRow = updatedCard.querySelector('.course-row:last-child');
+          if (lastRow) lastRow.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+        showToast('Course added');
+        trackEvent('course_added', { tool: 'cgpa' });
+      } else if (action === 'remove-cgpa-course') {
+        const row = actionBtn.closest('.course-row');
+        if (!row) return;
+        const cid = row.getAttribute('data-course-id');
+        semester.courses = semester.courses.filter((c) => String(c.id) !== String(cid));
+        if (semester.courses.length === 0) {
+          semester.courses.push(createBlankCourse());
+        }
+        saveToStorage();
+        render();
+        calculateAndShow();
+        showToast('Course removed');
+      } else if (action === 'remove-semester') {
+        if (state.semesters.length <= 1) return;
+        state.semesters = state.semesters.filter((s) => String(s.id) !== String(sid));
+        saveToStorage();
+        render();
+        calculateAndShow();
+        showToast('Semester removed');
+        trackEvent('semester_removed', { tool: 'cgpa' });
+      }
+    });
+
+    // Mode toggle
+    toggle.addEventListener('click', (e) => {
+      if (e.target !== modeInput) {
+        e.preventDefault();
+      }
+      state.cgpaMode = state.cgpaMode === 'grade' ? 'percentage' : 'grade';
+      syncModeUI();
       saveToStorage();
       render();
-      scheduleCalc('cgpa');
-
+      calculateAndShow();
       trackEvent('mode_toggled', { tool: 'cgpa', mode: state.cgpaMode });
     });
 
-    // Add semester — push to end (chronological order), then scroll to new card
+    // Add semester
     addBtn.addEventListener('click', () => {
       if (state.semesters.length >= 8) return;
-      const semester = {
-        id: Date.now(),
-        name: '',
-        courses: [{ id: Date.now() + 1, name: '', credits: '', grade: 'A+', percentage: '' }],
-      };
-      state.semesters.push(semester);
+      state.semesters.push(createBlankSemester());
       saveToStorage();
       render();
-      // Scroll to the newly added semester card (last child)
       const lastCard = container.querySelector('.semester-card:last-child');
       if (lastCard) lastCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
       showToast('Semester added');
       trackEvent('semester_added', { tool: 'cgpa' });
     });
 
-    // Remove semester
-    window.szabist.removeSemester = (semesterId) => {
-      if (state.semesters.length <= 1) return;
-      state.semesters = state.semesters.filter((s) => s.id !== semesterId);
-      saveToStorage();
-      render();
-      showToast('Semester removed');
-      trackEvent('semester_removed', { tool: 'cgpa' });
-    };
-
-    window.szabist.updateSemesterName = (id, name) => {
-      const semester = state.semesters.find((s) => s.id === id);
-      if (semester) semester.name = name;
-      saveToStorage();
-    };
-
-    window.szabist.addCgpaCourse = (semesterId) => {
-      const semester = state.semesters.find((s) => s.id === semesterId);
-      if (!semester) return;
-      semester.courses.push({
-        id: Date.now() + Math.random(), name: '', credits: '', grade: 'A+', percentage: '',
-      });
-      saveToStorage();
-      render();
-      // Scroll to the newly added course row within the target semester card
-      const card = document.querySelector(`.semester-card[data-id="${semesterId}"]`);
-      if (card) {
-        const lastRow = card.querySelector('.course-row:last-child');
-        if (lastRow) lastRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }
-    };
-
-    window.szabist.removeCgpaCourse = (semesterId, courseId) => {
-      const semester = state.semesters.find((s) => s.id === semesterId);
-      if (!semester) return;
-      semester.courses = semester.courses.filter((c) => c.id !== courseId);
-      if (semester.courses.length === 0) {
-        semester.courses.push({ id: Date.now() + 1, name: '', credits: '', grade: 'A+', percentage: '' });
-      }
-      saveToStorage();
-      render();
-    };
-
-    window.szabist.updateCgpaCourseName = (sid, cid, value) => {
-      const s = state.semesters.find((x) => x.id === sid);
-      if (!s) return;
-      const c = s.courses.find((x) => x.id === cid);
-      if (c) c.name = value;
-      saveToStorage();
-    };
-
-    window.szabist.updateCgpaCourseCredits = (sid, cid, value) => {
-      const s = state.semesters.find((x) => x.id === sid);
-      if (!s) return;
-      const c = s.courses.find((x) => x.id === cid);
-      if (c) c.credits = Math.max(0, Math.min(6, parseInt(value, 10) || 0));
-      saveToStorage();
-      scheduleCalc('cgpa');
-    };
-
-    window.szabist.updateCgpaCourseGrade = (sid, cid, value) => {
-      const s = state.semesters.find((x) => x.id === sid);
-      if (!s) return;
-      const c = s.courses.find((x) => x.id === cid);
-      if (c) c.grade = value;
-      saveToStorage();
-      scheduleCalc('cgpa');
-    };
-
-    window.szabist.updateCgpaCourseValue = (sid, cid, value) => {
-      const s = state.semesters.find((x) => x.id === sid);
-      if (!s) return;
-      const c = s.courses.find((x) => x.id === cid);
-      if (c) c.percentage = Math.min(100, Math.max(0, parseFloat(value) || 0));
-      saveToStorage();
-      scheduleCalc('cgpa');
-    };
-
-    // Calculate
+    // Calculate button
     calcBtn.addEventListener('click', () => {
-      calculateAndShow('cgpa');
-      scrollToCgpaResult();
-      let totalPoints = 0;
-      let totalCredits = 0;
-      let semesterCount = 0;
-      for (const semester of state.semesters) {
-        let hasCourse = false;
-        for (const course of semester.courses) {
-          const credits = parseInt(course.credits, 10) || 0;
-          if (credits <= 0) continue;
-          hasCourse = true;
-          let gpa;
-          if (state.cgpaMode === 'grade') {
-            gpa = gradeToGPA[course.grade] || 0;
-          } else {
-            gpa = percentageToGPA(course.percentage).gpa;
-          }
-          totalPoints += credits * gpa;
-          totalCredits += credits;
-        }
-        if (hasCourse) semesterCount++;
+      const { cgpa, totalCredits, semesterCount } = calculateAndShow();
+      if (totalCredits <= 0) {
+        showToast('Enter credit hours for at least one course first', 'error');
+        return;
       }
-      const cgpa = totalCredits > 0 ? totalPoints / totalCredits : 0;
+      scrollToCgpaResult();
       trackEvent('calculation_completed', {
         tool: 'cgpa',
-        gpa: cgpa,
+        gpa: Number(cgpa.toFixed(2)),
         gpa_bucket: gpaBucket(cgpa),
         credits: totalCredits,
         semesters: semesterCount,
@@ -938,13 +993,10 @@
     // Clear all
     clearBtn.addEventListener('click', () => {
       if (confirm('Clear all semester data? This cannot be undone.')) {
-        state.semesters = [{
-          id: Date.now(), name: '',
-          courses: [{ id: Date.now() + 1, name: '', credits: '', grade: 'A+', percentage: '' }],
-        }];
+        state.semesters = [createBlankSemester()];
         saveToStorage();
         render();
-        document.getElementById('cgpaResult').classList.add('hidden');
+        if (resultWrap) resultWrap.classList.add('hidden');
         showToast('Data cleared');
         trackEvent('data_cleared', { tool: 'cgpa' });
       }
@@ -958,11 +1010,13 @@
         try {
           await navigator.share({ title: 'My CGPA', text, url: window.location.href });
           trackEvent('result_shared', { tool: 'cgpa', method: 'web_share' });
-        } catch (e) { /* cancelled */ }
+        } catch (e) {
+          // cancelled
+        }
       } else {
         try {
           await navigator.clipboard.writeText(text);
-          showToast('Result copied to clipboard');
+          showToast('Result copied to clipboard', 'success');
           trackEvent('result_shared', { tool: 'cgpa', method: 'clipboard' });
         } catch (e) {
           showToast('Unable to copy result', 'error');
@@ -970,16 +1024,13 @@
       }
     });
 
-    // Init
-    loadFromStorage();
+    // Initial render
     if (state.semesters.length === 0) {
-      state.semesters = [{
-        id: Date.now(), name: '',
-        courses: [{ id: Date.now() + 1, name: '', credits: '', grade: 'A+', percentage: '' }],
-      }];
+      state.semesters = [createBlankSemester()];
     }
+    syncModeUI();
     render();
-    calculateAndShow('cgpa');
+    calculateAndShow({ initialLoad: true });
 
     trackEvent('calculator_started', { tool: 'cgpa' });
   }
@@ -992,18 +1043,24 @@
     const exportBtn = document.getElementById('exportDataBtn');
     const clearBtn = document.getElementById('clearAllDataBtn');
 
-    const consent = getConsent();
     if (consentCheckbox) {
-      consentCheckbox.checked = consent === true;
+      consentCheckbox.checked = getConsent();
       consentCheckbox.addEventListener('change', (e) => {
-        setConsent(e.target.checked);
-        trackEvent('tracking_consent_changed', { granted: e.target.checked });
-        showToast(e.target.checked ? 'Tracking enabled' : 'Tracking disabled');
+        const enabled = e.target.checked;
+        if (enabled) {
+          setConsent(true);
+          trackEvent('tracking_consent_changed', { granted: true });
+        } else {
+          trackEvent('tracking_consent_changed', { granted: false });
+          setConsent(false);
+        }
+        showToast(enabled ? 'Tracking enabled' : 'Tracking disabled');
       });
     }
 
     if (exportBtn) {
       exportBtn.addEventListener('click', () => {
+        loadFromStorage();
         const data = JSON.stringify(state, null, 2);
         const blob = new Blob([data], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
@@ -1012,7 +1069,7 @@
         a.download = 'szabist-gpa-data.json';
         a.click();
         URL.revokeObjectURL(url);
-        showToast('Data exported');
+        showToast('Data exported', 'success');
         trackEvent('data_exported');
       });
     }
@@ -1024,7 +1081,6 @@
           saveToStorage();
           showToast('All data deleted');
           trackEvent('data_cleared', { tool: 'all' });
-          // Redirect to home so user isn't stuck on empty settings
           setTimeout(() => { location.href = 'index.html'; }, 800);
         }
       });
@@ -1035,10 +1091,12 @@
   /*  Utilities                                                         */
   /* ------------------------------------------------------------------ */
   function escapeHtml(text) {
-    if (!text) return '';
+    if (text === null || text === undefined || text === '') return '';
     const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
+    div.textContent = String(text);
+    return div.innerHTML
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
   }
 
   function gpaBucket(gpa) {
@@ -1052,8 +1110,6 @@
   /* ------------------------------------------------------------------ */
   /*  Theme toggle (light / dark)                                       */
   /* ------------------------------------------------------------------ */
-  const THEME_KEY = 'szabistTheme_v2';
-
   function getSavedTheme() {
     try {
       return localStorage.getItem(THEME_KEY);
@@ -1081,22 +1137,24 @@
 
   function setThemeIcon(btn, theme) {
     if (!btn) return;
-    const icon = theme === 'dark' ? THEME_ICONS.dark : THEME_ICONS.light;
-    btn.innerHTML = icon;
+    btn.innerHTML = theme === 'dark' ? THEME_ICONS.dark : THEME_ICONS.light;
     btn.setAttribute('aria-label', theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme');
   }
 
   function applyTheme(theme) {
     const body = document.body;
     const btn = document.getElementById('themeToggleBtn');
+    const metaTheme = document.querySelector('meta[name="theme-color"]');
 
     if (theme === 'dark') {
       body.classList.remove('light-theme');
       body.classList.add('dark-theme');
+      if (metaTheme) metaTheme.setAttribute('content', '#16110d');
       saveTheme('dark');
     } else {
       body.classList.remove('dark-theme');
       body.classList.add('light-theme');
+      if (metaTheme) metaTheme.setAttribute('content', '#faf8f3');
       saveTheme('light');
     }
 
@@ -1106,25 +1164,15 @@
   function initTheme() {
     const body = document.body;
     const btn = document.getElementById('themeToggleBtn');
+    const currentTheme = getSavedTheme() === 'dark' ? 'dark' : 'light';
 
-    // Default to light theme
-    let currentTheme = getSavedTheme();
-    if (!currentTheme) {
-      currentTheme = 'light';
-      body.classList.add('light-theme');
-    } else if (currentTheme === 'dark') {
-      body.classList.remove('light-theme');
-      body.classList.add('dark-theme');
-    } else {
-      body.classList.add('light-theme');
-    }
+    applyTheme(currentTheme);
 
     if (btn) {
-      setThemeIcon(btn, currentTheme);
       btn.addEventListener('click', () => {
-        const isDark = body.classList.contains('dark-theme');
-        applyTheme(isDark ? 'light' : 'dark');
-        trackEvent('theme_toggled', { theme: isDark ? 'light' : 'dark' });
+        const nextTheme = body.classList.contains('dark-theme') ? 'light' : 'dark';
+        applyTheme(nextTheme);
+        trackEvent('theme_toggled', { theme: nextTheme });
       });
     }
   }
@@ -1139,34 +1187,20 @@
 
     let isOpen = false;
 
-    function toggle() {
-      isOpen = !isOpen;
+    function setOpen(next) {
+      isOpen = next;
       btn.setAttribute('aria-expanded', String(isOpen));
-      if (isOpen) {
-        nav.classList.add('open');
-      } else {
-        nav.classList.remove('open');
-      }
+      nav.classList.toggle('open', isOpen);
     }
 
-    btn.addEventListener('click', toggle);
+    btn.addEventListener('click', () => setOpen(!isOpen));
 
-    // Close when a nav link is clicked
     nav.querySelectorAll('.nav-link').forEach((link) => {
-      link.addEventListener('click', () => {
-        isOpen = false;
-        btn.setAttribute('aria-expanded', 'false');
-        nav.classList.remove('open');
-      });
+      link.addEventListener('click', () => setOpen(false));
     });
 
-    // Close on escape
     document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape' && isOpen) {
-        isOpen = false;
-        btn.setAttribute('aria-expanded', 'false');
-        nav.classList.remove('open');
-      }
+      if (e.key === 'Escape' && isOpen) setOpen(false);
     });
   }
 
@@ -1175,22 +1209,19 @@
   /* ------------------------------------------------------------------ */
   function initPage(pageType) {
     loadFromStorage();
-    collapseEmptySlots();
 
     if (pageType === 'semester') initSemesterPage();
     else if (pageType === 'cgpa') initCgpaPage();
     else if (pageType === 'settings') initSettingsPage();
-
-    // Global: share + track helper exposed
-    window.szabist.trackEvent = trackEvent;
   }
 
   /* ------------------------------------------------------------------ */
-  /*  Global DOM ready — theme, mobile nav + consent banner             */
+  /*  Global DOM ready — theme, mobile nav & placement slots            */
   /* ------------------------------------------------------------------ */
   document.addEventListener('DOMContentLoaded', () => {
     initTheme();
     initMobileNav();
+    initPlacementSlots();
   });
 
   /* ------------------------------------------------------------------ */
@@ -1198,17 +1229,7 @@
   /* ------------------------------------------------------------------ */
   window.szabist = {
     initPage,
-    updateCourse: () => {},
-    removeCourse: () => {},
-    removeSemester: () => {},
-    updateSemesterName: () => {},
-    addCgpaCourse: () => {},
-    removeCgpaCourse: () => {},
-    updateCgpaCourseName: () => {},
-    updateCgpaCourseCredits: () => {},
-    updateCgpaCourseGrade: () => {},
-    updateCgpaCourseValue: () => {},
+    activateSlot,
     trackEvent,
   };
-
 })();
