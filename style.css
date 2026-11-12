@@ -1110,6 +1110,18 @@ select.input-field option {
   height: 50px;
 }
 
+.slot-embed--fallback {
+  width: 100% !important;
+  height: auto !important;
+  transform: none !important;
+  line-height: 1.4;
+}
+
+.slot-frame--wide:has(.slot-embed--fallback) {
+  height: auto;
+  min-height: var(--slot-height-wide);
+}
+
 /* Scale 728x90 proportionally on smaller viewports so nothing clips */
 @media (min-width: 480px) and (max-width: 759px) {
   .slot-frame--wide {
