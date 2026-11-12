@@ -1,38 +1,38 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://tariq-bawany.github.io/GPA-Calculator/</loc>
-    <lastmod>2026-11-08</lastmod>
+    <loc>https://cgpa-gpa-calculator.netlify.app/</loc>
+    <lastmod>2026-11-12</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://tariq-bawany.github.io/GPA-Calculator/semester-gpa.html</loc>
-    <lastmod>2026-11-08</lastmod>
+    <loc>https://cgpa-gpa-calculator.netlify.app/semester-gpa.html</loc>
+    <lastmod>2026-11-12</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://tariq-bawany.github.io/GPA-Calculator/cgpa.html</loc>
-    <lastmod>2026-11-08</lastmod>
+    <loc>https://cgpa-gpa-calculator.netlify.app/cgpa.html</loc>
+    <lastmod>2026-11-12</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://tariq-bawany.github.io/GPA-Calculator/settings.html</loc>
-    <lastmod>2026-11-08</lastmod>
+    <loc>https://cgpa-gpa-calculator.netlify.app/settings.html</loc>
+    <lastmod>2026-11-12</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.3</priority>
   </url>
   <url>
-    <loc>https://tariq-bawany.github.io/GPA-Calculator/privacy.html</loc>
-    <lastmod>2026-11-08</lastmod>
+    <loc>https://cgpa-gpa-calculator.netlify.app/privacy.html</loc>
+    <lastmod>2026-11-12</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
   </url>
   <url>
-    <loc>https://tariq-bawany.github.io/GPA-Calculator/terms.html</loc>
-    <lastmod>2026-11-08</lastmod>
+    <loc>https://cgpa-gpa-calculator.netlify.app/terms.html</loc>
+    <lastmod>2026-11-12</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
   </url>

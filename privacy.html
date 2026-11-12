@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Privacy Policy for SZABIST GPA Calculator — local browser storage and privacy-friendly analytics.">
     <meta name="theme-color" content="#faf8f3">
     <title>Privacy Policy — SZABIST GPA Calculator</title>
     <!-- Umami Analytics -->
@@ -16,6 +17,17 @@
     <link rel="apple-touch-icon" href="favicon.svg">
 </head>
 <body class="light-theme">
+    <script>
+        (function () {
+            try {
+                if (localStorage.getItem('szabistTheme_v2') === 'dark') {
+                    document.body.classList.remove('light-theme');
+                    document.body.classList.add('dark-theme');
+                }
+            } catch (e) {}
+        })();
+    </script>
+
     <a href="#main" class="skip-link">Skip to main content</a>
 
     <header class="header">
@@ -42,17 +54,21 @@
                 </button>
                 <nav class="nav" id="mainNav">
                     <a href="index.html" class="nav-link">Home</a>
+                    <a href="semester-gpa.html" class="nav-link">Semester GPA</a>
+                    <a href="cgpa.html" class="nav-link">CGPA</a>
                     <a href="settings.html" class="nav-link nav-link--settings">Settings</a>
                 </nav>
                 <nav class="nav-mobile" id="mobileNav">
                     <a href="index.html" class="nav-link">Home</a>
+                    <a href="semester-gpa.html" class="nav-link">Semester GPA</a>
+                    <a href="cgpa.html" class="nav-link">CGPA</a>
                     <a href="settings.html" class="nav-link nav-link--settings">Settings</a>
                 </nav>
             </div>
         </div>
     </header>
 
-    <main id="main" class="container" style="max-width: 720px;">
+    <main id="main" class="container legal-container">
         <div class="page-header mb-lg">
             <a href="index.html" class="btn btn-ghost btn-sm back-link">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -60,11 +76,13 @@
                 </svg>
                 Back to home
             </a>
-            <h1 class="page-title">Privacy Policy</h1>
-            <p class="page-desc">Last updated: November 2026</p>
+            <div class="page-title-wrap">
+                <h1 class="page-title">Privacy Policy</h1>
+                <p class="page-desc">Last updated: November 2026</p>
+            </div>
         </div>
 
-        <article class="card card-lg">
+        <article class="card card-lg legal-card">
             <div class="card-body">
                 <h2>1. Information we collect</h2>
                 <p>
@@ -75,13 +93,13 @@
                 <h2>2. Analytics</h2>
                 <p>
                     We use privacy-friendly, cookieless analytics (Umami) to count page visits and anonymous usage events. No personal
-                    identifiers are collected. You can disable extended event tracking in <a href="settings.html">Settings</a>.
+                    identifiers are collected. You can disable analytics tracking at any time in <a href="settings.html">Settings</a>.
                 </p>
 
                 <h2>3. Advertising</h2>
                 <p>
                     This tool may display advertisements in reserved slots. Advertising partners may receive standard, non-personal
-                    signals (such as page referrer or device class) per their own policies. Ad slots are clearly separated from calculator content.
+                    signals (such as page referrer or device class) per their own policies. Reserved placement areas are clearly separated from calculator content.
                 </p>
 
                 <h2>4. Data retention</h2>
@@ -110,11 +128,14 @@
                     <p class="footer-copy">Unofficial tool for SZABIST students. Not affiliated with SZABIST.</p>
                 </div>
                 <nav class="footer-nav">
+                    <a href="privacy.html">Privacy</a>
                     <a href="terms.html">Terms</a>
                     <a href="settings.html">Settings</a>
                 </nav>
             </div>
         </div>
     </footer>
+
+    <script src="script.js"></script>
 </body>
 </html>
