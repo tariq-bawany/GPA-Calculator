@@ -1005,9 +1005,9 @@ select.input-field option {
 /*  Ad Slots (reserved — collapse to 0 when empty)                    */
 /* ------------------------------------------------------------------ */
 .ad-slot {
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  display: block;
+  visibility: visible;
+  opacity: 1;
   margin: var(--space-lg) 0;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
@@ -1019,41 +1019,25 @@ select.input-field option {
   overflow: visible;
 }
 
-.ad-slot--leaderboard { height: var(--ad-slot-height-leaderboard); min-height: var(--ad-slot-height-leaderboard); }
-.ad-slot--mrect { height: var(--ad-slot-height-mrect); min-height: var(--ad-slot-height-mrect); }
-.ad-slot--banner { height: var(--ad-slot-height-banner); min-height: var(--ad-slot-height-banner); }
+.ad-slot--leaderboard { height: 90px; min-height: 90px; }
+.ad-slot--mrect { height: 280px; min-height: 280px; }
+.ad-slot--banner { height: 60px; min-height: 60px; }
 
 .ad-slot.empty {
-  height: 0;
-  min-height: 0;
-  padding: 0;
-  margin: 0;
-  border: none;
-  opacity: 0;
-  visibility: hidden;
+  height: 0 !important;
+  min-height: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border: none !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
 }
 
 .ad-slot.ad-loaded {
-  display: block;
-  visibility: visible;
   opacity: 1 !important;
-  border: 1px solid var(--color-primary);
-  background: var(--color-surface);
-  margin: var(--space-lg) 0;
-}
-
-/* Ensure loaded ad slots maintain their size-specific heights */
-.ad-slot.ad-loaded.ad-slot--leaderboard {
-  height: var(--ad-slot-height-leaderboard) !important;
-  min-height: var(--ad-slot-height-leaderboard) !important;
-}
-.ad-slot.ad-loaded.ad-slot--mrect {
-  height: var(--ad-slot-height-mrect) !important;
-  min-height: var(--ad-slot-height-mrect) !important;
-}
-.ad-slot.ad-loaded.ad-slot--banner {
-  height: var(--ad-slot-height-banner) !important;
-  min-height: var(--ad-slot-height-banner) !important;
+  visibility: visible !important;
+  border: 1px solid var(--color-primary) !important;
+  background: var(--color-surface) !important;
 }
 
 .ad-slot-placeholder {
