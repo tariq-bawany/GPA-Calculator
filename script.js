@@ -261,6 +261,53 @@
     document.body.classList.toggle('has-dock', Boolean(activeDock));
   }
 
+  function isPreviewHost() {
+    const host = (window.location && window.location.hostname) || '';
+    return (
+      !host ||
+      host === 'localhost' ||
+      host === '127.0.0.1' ||
+      host.endsWith('.e2b.app') ||
+      host.endsWith('.local') ||
+      window.location.protocol === 'file:'
+    );
+  }
+
+  function verifyLiveEmbeds() {
+    const previewEnv = isPreviewHost();
+    document.querySelectorAll('.slot-embed').forEach((embed) => {
+      if (embed.querySelector('iframe')) return; // Live creative loaded!
+
+      const isWide = embed.classList.contains('slot-embed--728');
+      const parentSlot = embed.closest('.slot-frame, .dock-frame');
+      if (!parentSlot || parentSlot.classList.contains('slot-frame--collapsed')) return;
+
+      if (previewEnv) {
+        embed.classList.add('slot-embed--fallback');
+        if (parentSlot.classList.contains('dock-frame')) {
+          embed.innerHTML = `
+            <div class="slot-preview slot-preview--compact">
+              <span class="slot-badge">Live Tag Installed</span>
+              <div class="slot-dimensions">320 × 50 · Sticky Slot</div>
+            </div>
+          `;
+        } else {
+          embed.innerHTML = `
+            <div class="slot-preview ${isWide ? 'slot-preview--wide' : 'slot-preview--compact'}">
+              <span class="slot-badge">Live Tag Installed</span>
+              <div class="slot-dimensions">${isWide ? '728 × 90 Leaderboard' : '320 × 50 Banner'}</div>
+              <span class="slot-subtext">Renders live creatives on your registered domain (with shields off)</span>
+            </div>
+          `;
+        }
+      } else {
+        parentSlot.classList.add('slot-frame--collapsed');
+        parentSlot.classList.remove('slot-frame--active');
+      }
+    });
+    syncDockBodyState();
+  }
+
   function initPlacementSlots() {
     document.querySelectorAll('[data-dismiss-dock]').forEach((btn) => {
       btn.addEventListener('click', () => {
@@ -276,6 +323,15 @@
     });
 
     syncDockBodyState();
+
+    const checkDelay = isPreviewHost() ? 1200 : 3500;
+    if (document.readyState === 'complete') {
+      setTimeout(verifyLiveEmbeds, checkDelay);
+    } else {
+      window.addEventListener('load', () => {
+        setTimeout(verifyLiveEmbeds, checkDelay);
+      });
+    }
   }
 
   function activateSlot(slotId, contentHtml) {

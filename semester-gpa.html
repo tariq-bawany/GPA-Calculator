@@ -12,6 +12,7 @@
     <link rel="stylesheet" href="style.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://www.highrevenueformat.com" crossorigin>
     <link rel="manifest" href="manifest.json">
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
     <link rel="apple-touch-icon" href="favicon.svg">
@@ -83,15 +84,19 @@
             </div>
         </div>
 
-        <!--
-          PROTOTYPE PLACEHOLDER SLOT (728x90 Leaderboard)
-          When ready for production ads: replace the inner .slot-preview div with your Adsterra or AdSense tag.
-        -->
+        <!-- Live Adsterra Leaderboard (728x90) -->
         <div class="slot-frame slot-frame--wide slot-frame--active" id="slot-top-semester" role="region" aria-label="Reserved layout space">
-            <div class="slot-preview slot-preview--wide">
-                <span class="slot-badge">Placeholder Advertisement</span>
-                <div class="slot-dimensions">Leaderboard Slot · 728 × 90</div>
-                <span class="slot-subtext">Reserved placement for prototype preview</span>
+            <div class="slot-embed slot-embed--728">
+                <script>
+                  atOptions = {
+                    'key' : '0e09b609669e1365a5c4e20be1857d5c',
+                    'format' : 'iframe',
+                    'height' : 90,
+                    'width' : 728,
+                    'params' : {}
+                  };
+                </script>
+                <script src="https://www.highrevenueformat.com/0e09b609669e1365a5c4e20be1857d5c/invoke.js"></script>
             </div>
         </div>
 
@@ -208,19 +213,24 @@
         </div>
     </footer>
 
-    <!--
-      PROTOTYPE STICKY BOTTOM PLACEHOLDER (360x60)
-      When ready for production ads: replace the inner .slot-preview div with your Adsterra or AdSense tag.
-    -->
+    <!-- Live Adsterra Sticky Bottom Banner (320x50) -->
     <div class="dock-frame slot-frame--active" id="dock-bottom-semester" role="region" aria-label="Reserved bottom space">
         <button type="button" class="dock-dismiss" id="dismissDockSemester" data-dismiss-dock="dock-bottom-semester" aria-label="Dismiss bottom bar" title="Dismiss">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
             </svg>
         </button>
-        <div class="slot-preview slot-preview--compact">
-            <span class="slot-badge">Placeholder Advertisement</span>
-            <div class="slot-dimensions">Sticky Banner · 360 × 60</div>
+        <div class="slot-embed slot-embed--320">
+            <script>
+              atOptions = {
+                'key' : '7cec70fe60671ecb0645989f09b6b6d4',
+                'format' : 'iframe',
+                'height' : 50,
+                'width' : 320,
+                'params' : {}
+              };
+            </script>
+            <script src="https://www.highrevenueformat.com/7cec70fe60671ecb0645989f09b6b6d4/invoke.js"></script>
         </div>
     </div>
 
