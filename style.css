@@ -1059,9 +1059,7 @@ select.input-field option {
 }
 
 /* ------------------------------------------------------------------ */
-/*  Reserved Placement Slots (Prototype Placeholders & Future Live)   */
-/*  Uses neutral class/ID selectors so browser shields never hide     */
-/*  prototype layout previews.                                        */
+/*  Reserved Placement Slots (Live Iframe Units & Fallback Styling)   */
 /* ------------------------------------------------------------------ */
 .slot-frame {
   display: flex;
@@ -1084,8 +1082,62 @@ select.input-field option {
 }
 
 .slot-frame--compact {
-  max-width: 360px;
-  min-height: var(--slot-height-compact);
+  max-width: 320px;
+  min-height: 50px;
+}
+
+.slot-embed {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  line-height: 0;
+}
+
+.slot-embed iframe {
+  display: block;
+  border: 0;
+  margin: 0 auto;
+}
+
+.slot-embed--728 {
+  width: 728px;
+  height: 90px;
+}
+
+.slot-embed--320 {
+  width: 320px;
+  height: 50px;
+}
+
+/* Scale 728x90 proportionally on smaller viewports so nothing clips */
+@media (min-width: 480px) and (max-width: 759px) {
+  .slot-frame--wide {
+    height: 58px;
+    min-height: 58px;
+  }
+  .slot-embed--728 {
+    transform: scale(0.62);
+    transform-origin: center center;
+  }
+}
+
+@media (max-width: 479px) {
+  .slot-frame--wide {
+    height: 46px;
+    min-height: 46px;
+  }
+  .slot-embed--728 {
+    transform: scale(0.46);
+    transform-origin: center center;
+  }
+}
+
+@media (max-width: 340px) {
+  .slot-embed--320 {
+    transform: scale(0.92);
+    transform-origin: center center;
+  }
 }
 
 .slot-frame--collapsed,
@@ -1174,8 +1226,13 @@ select.input-field option {
   width: 100%;
   max-width: 360px;
   height: var(--slot-height-compact);
+  display: flex;
+  align-items: center;
+  justify-content: center;
   z-index: 100;
   background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-bottom: none;
   box-shadow: 0 -4px 16px rgba(26, 20, 16, 0.2);
   border-radius: var(--radius-lg) var(--radius-lg) 0 0;
 }

@@ -12,6 +12,7 @@
     <link rel="stylesheet" href="style.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://www.highrevenueformat.com" crossorigin>
     <link rel="manifest" href="manifest.json">
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
     <link rel="apple-touch-icon" href="favicon.svg">
@@ -83,16 +84,19 @@
             </div>
         </section>
 
-        <!--
-          PROTOTYPE PLACEHOLDER SLOT (728x90 Leaderboard)
-          Neutral class/ID names prevent browser shields from hiding the prototype preview.
-          When ready for production ads: replace the inner .slot-preview div with your Adsterra or AdSense tag.
-        -->
+        <!-- Live Adsterra Leaderboard (728x90) -->
         <div class="slot-frame slot-frame--wide slot-frame--active" id="slot-top-home" role="region" aria-label="Reserved layout space">
-            <div class="slot-preview slot-preview--wide">
-                <span class="slot-badge">Placeholder Advertisement</span>
-                <div class="slot-dimensions">Leaderboard Slot · 728 × 90</div>
-                <span class="slot-subtext">Reserved placement for prototype preview</span>
+            <div class="slot-embed slot-embed--728">
+                <script>
+                  atOptions = {
+                    'key' : '0e09b609669e1365a5c4e20be1857d5c',
+                    'format' : 'iframe',
+                    'height' : 90,
+                    'width' : 728,
+                    'params' : {}
+                  };
+                </script>
+                <script src="https://www.highrevenueformat.com/0e09b609669e1365a5c4e20be1857d5c/invoke.js"></script>
             </div>
         </div>
 
@@ -143,15 +147,19 @@
             </div>
         </section>
 
-        <!--
-          PROTOTYPE PLACEHOLDER SLOT (300x250 Medium Rectangle)
-          When ready for production ads: replace the inner .slot-preview div with your Adsterra or AdSense tag.
-        -->
-        <div class="slot-frame slot-frame--tall slot-frame--active" id="slot-bottom-home" role="region" aria-label="Reserved layout space">
-            <div class="slot-preview slot-preview--tall">
-                <span class="slot-badge">Placeholder Advertisement</span>
-                <div class="slot-dimensions">Medium Rectangle · 300 × 250</div>
-                <span class="slot-subtext">Reserved placement for prototype preview</span>
+        <!-- Live Adsterra Compact Banner (320x50) -->
+        <div class="slot-frame slot-frame--compact slot-frame--active" id="slot-bottom-home" role="region" aria-label="Reserved layout space">
+            <div class="slot-embed slot-embed--320">
+                <script>
+                  atOptions = {
+                    'key' : '7cec70fe60671ecb0645989f09b6b6d4',
+                    'format' : 'iframe',
+                    'height' : 50,
+                    'width' : 320,
+                    'params' : {}
+                  };
+                </script>
+                <script src="https://www.highrevenueformat.com/7cec70fe60671ecb0645989f09b6b6d4/invoke.js"></script>
             </div>
         </div>
     </main>
